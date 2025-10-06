@@ -198,13 +198,7 @@ The pipeline requires a Docker container with all bioinformatics tools pre-insta
 
 ```bash
 # Build the Docker image
-docker build -t kinnex_longreads .
-
-# View available tools
-docker run kinnex_longreads --help
-
-# Test a specific tool
-docker run kinnex_longreads samtools --version
+docker buildx build --platform linux/amd64 -t kinnex_longreads .
 ```
 
 ### 🛠️ Local Environment Setup

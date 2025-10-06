@@ -1,88 +1,46 @@
-# Kinnex/MAS-Iso-Seq Pipeline Docker Image
-# Base image with conda and bioinformatics tools
-FROM continuumio/miniconda3:latest
+# syntax=docker/dockerfile:1.7
+# Kinnex/MAS-Iso-Seq Pipeline Docker Image (Miniconda, optimized)
+FROM continuumio/miniconda3:24.7.1-0
 
-# Set metadata
-LABEL maintainer="Chao Di, cdi@childrensnational.org"
-LABEL description="Complete toolset for Kinnex/MAS-Iso-Seq long-read sequencing pipeline"
-LABEL version="1.0"
+LABEL maintainer="Chao Di, cdi@childrensnational.org" \
+      description="Kinnex/MAS-Iso-Seq long-read pipeline toolset" \
+      version="1.0"
 
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PATH="/opt/conda/bin:$PATH"
-ENV CONDA_AUTO_UPDATE_CONDA=false
+ENV DEBIAN_FRONTEND=noninteractive \
+    CONDA_AUTO_UPDATE_CONDA=false \
+    PATH="/opt/conda/bin:${PATH}"
 
-# Update system packages and install essential tools
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    wget \
-    curl \
-    git \
-    unzip \
-    bzip2 \
-    ca-certificates \
-    libglib2.0-0 \
-    libxext6 \
-    libsm6 \
-    libxrender1 \
-    mercurial \
-    subversion \
-    && apt-get clean \
+# Install OS packages
+RUN set -eux; \
+    apt-get update -y && apt-get install -y --no-install-recommends \
+        ca-certificates wget curl git unzip bzip2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Add conda-forge and bioconda channels
-RUN conda config --add channels defaults \
-    && conda config --add channels bioconda \
-    && conda config --add channels conda-forge \
-    && conda config --set channel_priority strict
+# Use Mamba inside your Miniconda to speed up solves
+RUN conda install -y -n base -c conda-forge mamba \
+    && conda clean -a -y
 
-# Install PacBio and bioinformatics tools
-RUN conda install -y \
-    # Core PacBio tools from pbbioconda
-    pbccs \
-    pbtrim \
-    jasmine \
-    lima \
-    skera \
-    isoseq \
-    pbmm2 \
-    pigeon-classify \
-    pigeon-filter \
-    # Alternative/additional tools
-    minimap2 \
-    samtools \
-    bcftools \
-    htslib \
-    # Utility tools
-    curl \
-    # Python packages for data processing
-    python=3.12 \
-    pandas \
-    numpy \
-    scipy \
-    matplotlib \
-    seaborn \
-    # R and packages for analysis
-    r-base=4.4 \
-    r-essentials \
-    r-tidyverse \
-    r-ggplot2 \
-    # File processing tools
-    gzip \
-    && conda clean -all
+# Channel config once; strict priority to avoid cross-pinning issues
+RUN conda config --system --add channels conda-forge \
+    && conda config --system --add channels bioconda \
+    && conda config --system --set channel_priority strict
 
-# Install longbow (alternative segmentation tool)
-RUN pip install longbow-pipeline
+# Install stacks with mamba (single transaction) and clean caches
+RUN mamba install -y \
+        python=3.12 \
+        pbmm2 lima isoseq pbccs pbjasmine pbpigeon \
+        pbskera samtools bcftools htslib \
+        pandas numpy scipy \
+        r-base \
+        pandoc \
+        gzip \
+    && conda clean -a -y
 
-# Copy custom scripts
-COPY scripts/ /usr/local/scripts/
-RUN chmod +x /usr/local/scripts/*
+# Install minimal R packages using Rscript
+RUN Rscript -e "install.packages(c('tidyverse', 'ggplot2'), repos='https://cloud.r-project.org/')"
 
-# Add scripts to PATH
-ENV PATH="/usr/local/scripts:$PATH"
+COPY scripts/ /scripts/
+RUN chmod -R +r /scripts/ && chown -R 1000:1000 /scripts/
 
-# Create working directory
-RUN mkdir -p /data
-
-# Set working directory
+## Scripts step removed: scripts/ directory not present
 WORKDIR /data

@@ -15,6 +15,7 @@ __pycache__/
 *.inputs.json
 *.outputs.json
 **/*.sh
+!mount_s3.sh
 !prep.sh
 *.err
 *.out

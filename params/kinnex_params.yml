@@ -1,0 +1,15 @@
+hifi_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/data/bti-private-us-east-1-prd-rokita-lab/source/SR009023_Kinnex/SMRTcell1/hifi_reads
+
+primers_fa:
+  class: File
+  path: /path/to/primers.fasta
+
+reference_fa:
+  class: File
+  path: /path/to/reference.fasta
+
+annotation_gtf:
+  class: File
+  path: /path/to/annotation.gtf

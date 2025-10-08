@@ -29,22 +29,16 @@ tmp/
 *.zip
 outputs/*
 !outputs/.gitkeep
-params/*
-!params/.gitkeep
 test/
 logs/*
 !logs/.gitkeep
 sbg-hints/* 
 !sbg-hints/.gitkeep
-workflows/*
-!workflows/.gitkeep
-tools/*
-!tools/.gitkeep
-scripts/*
-!scripts/.gitkeep
 # harmonized data
 data/*
 !data/.gitkeep
 # manifest files
 manifests/*
 !manifests/.gitkeep
+
+tests/

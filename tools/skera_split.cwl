@@ -3,41 +3,56 @@ class: CommandLineTool
 label: Kinnex segmentation (skera split)
 requirements:
   DockerRequirement:
-    dockerPull: kinnex_longreads
+    dockerImageId: pgc-images.sbgenomics.com/chaodi/kinnex_longreads:v1.0
   ShellCommandRequirement: {}
-  InlineJavascriptRequirement: {}
   InitialWorkDirRequirement:
     listing:
       - entryname: run_skera.sh
         entry: |
           #!/usr/bin/env bash
           set -euo pipefail
-          INPUT="$1"          # HiFi BAM input
-          PRIMERS="$2"        # adapters/primers fasta
-          PREFIX="$3"         # output prefix (e.g., segmented)
-          THREADS="$4"        # threads
-          DATASET_XML_FLAG="$5"  # true|false
+          INPUT=$1
+          ADAPTERS=$2
+          PREFIX=$3
+          THREADS=$4
+          # CWL may omit boolean false and other optional args
+          OUTPUT_XML_FLAG="true"  # true|false -> choose .xml vs .bam
+          LOG_LEVEL=""
+          LOG_FILE=""
+          if [ "$#" -ge 5 ]; then OUTPUT_XML_FLAG="$5"; fi
+          if [ "$#" -ge 6 ]; then LOG_LEVEL="$6"; fi
+          if [ "$#" -ge 7 ]; then LOG_FILE="$7"; fi
 
           echo "skera split" >&2
-          echo "input: ${INPUT}" >&2
-          echo "primers: ${PRIMERS}" >&2
-          echo "prefix: ${PREFIX}" >&2
-          echo "threads: ${THREADS}" >&2
-          echo "dataset_xml: ${DATASET_XML_FLAG}" >&2
+          echo "input: $INPUT" >&2
+          echo "adapters: $ADAPTERS" >&2
+          echo "prefix: $PREFIX" >&2
+          echo "threads: $THREADS" >&2
+          echo "output_xml: $OUTPUT_XML_FLAG" >&2
+          if [[ -n "$LOG_LEVEL" ]]; then echo "log-level: $LOG_LEVEL" >&2; fi
+          if [[ -n "$LOG_FILE" ]]; then echo "log-file: $LOG_FILE" >&2; fi
 
-          # Common options; --report ensures read_segmentation.report.json is produced
-          OPTS=(split --report --log-level INFO --log-file skera.log --alarms alarms.json -j "${THREADS}")
+          # Build options per 'skera split -h'
+          OPTS="split -j $THREADS"
+          if [[ -n "$LOG_LEVEL" ]]; then
+            OPTS="$OPTS --log-level $LOG_LEVEL"
+          fi
+          # Always write a log file in the working directory for CWL to collect
+          if [[ -z "$LOG_FILE" ]]; then
+            LOG_FILE="skera.log"
+          fi
+          OPTS="$OPTS --log-file $LOG_FILE"
 
-          if [[ "${DATASET_XML_FLAG}" == "true" ]]; then
-            # Write a ConsensusReadSet XML; skera will also emit BAMs it references
-            OUT="${PREFIX}.consensusreadset.xml"
+          if [[ "$OUTPUT_XML_FLAG" == "true" ]]; then
+            OUT="$PREFIX.consensusreadset.xml"
           else
-            # Produce segmented BAM directly
-            OUT="${PREFIX}.bam"
+            OUT="$PREFIX.bam"
           fi
 
-          echo "+ skera ${OPTS[*]} \"${INPUT}\" \"${PRIMERS}\" \"${OUT}\"" >&2
-          skera "${OPTS[@]}" "${INPUT}" "${PRIMERS}" "${OUT}"
+          echo "+ skera $OPTS \"$INPUT\" \"$ADAPTERS\" \"$OUT\"" >&2
+          # shellcheck disable=SC2086
+          skera $OPTS "$INPUT" "$ADAPTERS" "$OUT"
+
 
           echo "Outputs after skera run:" >&2
           ls -la >&2
@@ -45,12 +60,12 @@ baseCommand: [bash, run_skera.sh]
 inputs:
   in_bam:
     type: File
-    doc: HiFi BAM input (if using BAM mode)
+    doc: Input dataset (BAM or ConsensusReadSet XML)
     inputBinding:
       position: 1
   primers_fa:
     type: File
-    doc: Primers/adapters FASTA (e.g., mas16_primers.fasta)
+    doc: Adapters FASTA or AdapterSet XML (per skera split)
     inputBinding:
       position: 2
   out_prefix:
@@ -60,37 +75,51 @@ inputs:
       position: 3
   threads:
     type: int
-    default: 8
+    default: 0
     inputBinding:
       position: 4
   use_dataset_xml:
     type: boolean
-    default: false
-    doc: When true, treat input as ConsensusReadSet XML and write PREFIX.consensusreadset.xml
+    default: true
+    doc: When true, write PREFIX.consensusreadset.xml (else PREFIX.bam)
     inputBinding:
       position: 5
+  log_level:
+    type: string?
+    doc: Set log level (TRACE, DEBUG, INFO, WARN, FATAL)
+    inputBinding:
+      position: 6
+  log_file:
+    type: string?
+    doc: Log to a file instead of stderr (path)
+    inputBinding:
+      position: 7
 outputs:
   segmented_bam:
-    type: File?
+    type: File
     outputBinding:
       glob: $(inputs.out_prefix).bam
   non_passing_bam:
-    type: File?
+    type: File
     outputBinding:
       glob: $(inputs.out_prefix).non_passing.bam
   segmented_dataset:
-    type: File?
+    type: File
     outputBinding:
       glob: $(inputs.out_prefix).consensusreadset.xml
-  report_json:
+  summary_csv:
     type: File?
     outputBinding:
-      glob: read_segmentation.report.json
-  skera_log:
+      glob: $(inputs.out_prefix).summary.csv
+  ligations_csv:
     type: File?
     outputBinding:
-      glob: skera.log
-  alarms:
+      glob: $(inputs.out_prefix).ligations.csv
+  read_lengths_csv:
     type: File?
     outputBinding:
-      glob: alarms.json
+      glob: $(inputs.out_prefix).read_lengths.csv
+  adapters_csv_gz:
+    type: File?
+    outputBinding:
+      glob: $(inputs.out_prefix).found_adapters.csv.gz

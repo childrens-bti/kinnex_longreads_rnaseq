@@ -48,7 +48,7 @@ steps:
       sort_threads: sort_threads
       write_bam: write_bam_suffix
 
-    out: [transcripts_output, singletons_output, annotated_bam, cluster_log]
+    out: [transcripts_output, transcripts_bam_pbi, singletons_output, annotated_bam, report_csv]
     scatter: flnc_input
     scatterMethod: dotproduct
 
@@ -56,12 +56,15 @@ outputs:
   transcripts_bams:
     type: File[]
     outputSource: cluster_each/transcripts_output
+  transcripts_bam_pbis:
+    type: File[]?
+    outputSource: cluster_each/transcripts_bam_pbi
   singletons_outputs:
     type: File[]?
     outputSource: cluster_each/singletons_output
   annotated_bams:
     type: File[]?
     outputSource: cluster_each/annotated_bam
-  cluster_logs:
+  report_csvs:
     type: File[]?
-    outputSource: cluster_each/cluster_log
+    outputSource: cluster_each/report_csv

@@ -57,6 +57,11 @@ outputs:
     doc: Output transcripts BAM
     outputBinding:
       glob: $(inputs.transcripts_bam)
+  transcripts_bam_pbi:
+    type: File?
+    doc: PacBio BAM index (.pbi) for transcripts_output
+    outputBinding:
+      glob: $(inputs.transcripts_bam).pbi
   singletons_output:
     type: File?
     doc: Optional singletons output if --singletons is used
@@ -67,8 +72,8 @@ outputs:
     doc: Optional annotated BAM if --write-bam is used
     outputBinding:
       glob: $(inputs.write_bam)
-  cluster_log:
+  report_csv:
     type: File?
-    doc: Log file if --log-file is specified
+    doc: CSV report file
     outputBinding:
-      glob: $(inputs.log_file)
+      glob: "*.cluster_report.csv"

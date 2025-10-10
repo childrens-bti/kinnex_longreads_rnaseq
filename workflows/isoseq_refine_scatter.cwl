@@ -22,15 +22,17 @@ inputs:
 
 steps:
   list_bams:
-    run: ../tools/list_bams_expr.cwl
+    run: ../tools/list_files_by_pattern.cwl
     in:
-      demux_dir: demux_dir
-    out: [bam_files]
+      dir: demux_dir
+      pattern:
+        valueFrom: "^fl\\..*\\.bam$" # JavaScript regex pattern to match BAM files
+    out: [files]
 
   refine_each:
     run: ../tools/isoseq_refine.cwl
     in:
-      in_dataset: list_bams/bam_files
+      in_dataset: list_bams/files
       barcodes: barcodes
       biosample_name:
         valueFrom: $(inputs.in_dataset.nameroot.replace(/^fl\./,''))
@@ -38,18 +40,19 @@ steps:
       log_level: log_level
       require_polya: require_polya
     scatter: in_dataset         # scatter over the BAMs
-    out: [out_flnc_bam, filter_summary_json, report_csv, refine_log]
+    out: [out_flnc_bam, out_flnc_bam_pbi, filter_summary_json, report_csv]
 
 outputs:
   out_flnc_bams:
     type: File[]
     outputSource: refine_each/out_flnc_bam
+  out_flnc_bam_pbis:
+    type: File[]?
+    outputSource: refine_each/out_flnc_bam_pbi
   filter_summaries:
     type: File[]?
     outputSource: refine_each/filter_summary_json
   reports:
     type: File[]?
     outputSource: refine_each/report_csv
-  refine_logs:
-    type: File[]?
-    outputSource: refine_each/refine_log
+

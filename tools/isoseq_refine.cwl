@@ -49,17 +49,19 @@ outputs:
     outputBinding:
       glob: flnc.$(inputs.biosample_name).bam
 
+  out_flnc_bam_pbi:
+    type: File?
+    doc: PacBio BAM index (.pbi) for out_flnc_bam
+    outputBinding:
+      glob: flnc.$(inputs.biosample_name).bam.pbi
+
   filter_summary_json:
     type: File?
     outputBinding:
-      glob: flnc.$(inputs.biosample_name).filter_summary.json
+      glob: flnc.$(inputs.biosample_name).filter_summary.report.json
 
   report_csv:
     type: File?
     outputBinding:
       glob: flnc.$(inputs.biosample_name).report.csv
 
-  refine_log:
-    type: File?
-    outputBinding:
-      glob: flnc.$(inputs.biosample_name).refine.log

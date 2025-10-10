@@ -1,0 +1,6 @@
+demux_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/outputs/lima_isoseq_test
+barcodes:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/params/IsoSeq_v2_primers_12.fasta

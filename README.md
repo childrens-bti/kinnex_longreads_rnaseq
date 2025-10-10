@@ -60,31 +60,31 @@ isoseq refine --require-polya fl.barcode-pair.bam primers.fasta flnc.barcode-pai
 - Removes concatemers
 
 **Key Outputs**:
-- `flnc-*.bam` - Full-Length Non-Concatemer reads per sample
-- `flnc.report-*.csv` - Per-sample quality metrics
-- `isoseq_primers.report.json` - Primer detection summary
+- `flnc.*.bam` - Full-Length Non-Concatemer reads per sample
+- `flnc.*.report.csv` - Per-sample quality metrics
+- `isoseq_primers.report.json` - Primer detection summary (pbconda version does not have this output)
 
 #### 4. **Clustering & Consensus Building**
 **Tool**: `isoseq cluster2`
 
 ```bash
-isoseq cluster2 flnc-1.bam transcripts-1.fasta --verbose
+isoseq cluster2 flnc-1.bam transcripts-1.bam
 ```
 
 Clusters FLNC reads by sequence similarity and generates consensus transcripts for each cluster.
 
 **Key Outputs**:
-- `transcripts-*.fasta` - Consensus transcript sequences per sample
-- `sample*.transcripts.cluster_report.csv` - Clustering statistics
-- `sample*.transcripts.fl_counts.csv` - Read counts per transcript
-- `isoseq_saturation-*.txt` - Saturation curves
+- `clustered.*.transcripts.bam` - Consensus transcript sequences per sample
+- `clustered.*.transcripts.cluster_report.csv` - Clustering statistics
+- `sample*.transcripts.fl_counts.csv` - Read counts per transcript (pbconda version does not have this output)
+- `isoseq_saturation-*.txt` - Saturation curves (pbconda version does not have this output)
 
 #### 5. **Genome Mapping**
 **Tool**: `pbmm2` (wrapper for minimap2)  
 **Alternatives**: minimap2, uLTRA
 
 ```bash
-pbmm2 align reference.fasta transcripts-1.fasta mapped-1.bam --preset ISOSEQ --sort
+pbmm2 align reference.fasta transcripts-1.bam mapped-1.bam --preset ISOSEQ --sort
 ```
 
 Maps consensus transcripts to reference genome to determine genomic coordinates and splice junctions.
@@ -92,7 +92,7 @@ Maps consensus transcripts to reference genome to determine genomic coordinates 
 **Key Outputs**:
 - `mapped-*.bam` - Genomic alignments per sample
 - `mapped.bam-*.bai` - BAM index files
-- `isoseq_mapping.report.json` - Mapping statistics
+- `isoseq_mapping.report.json` - Mapping statistics (pbconda version does not have this output)
 
 #### 6. **Isoform Collapsing**
 **Tool**: `isoseq collapse`  

@@ -1,0 +1,6 @@
+reference:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/GRCh38.primary_assembly.genome.fa.gz
+bam_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/outputs/isoseq_cluster2_test/

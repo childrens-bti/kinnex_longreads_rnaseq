@@ -59,15 +59,21 @@ steps:
       use_dataset_xml: use_dataset_xml
       log_level: log_level
       log_file: log_file
-    out: [segmented_bam, non_passing_bam, segmented_dataset, summary_csv, ligations_csv, read_lengths_csv, adapters_csv_gz]
+    out: [segmented_bam, segmented_bam_pbi, non_passing_bam, non_passing_bam_pbi, segmented_dataset, summary_csv, ligations_csv, read_lengths_csv, adapters_csv_gz]
 
 outputs:
   segmented_bam:
     type: File
     outputSource: skera_split/segmented_bam
+  segmented_bam_pbi:
+    type: File?
+    outputSource: skera_split/segmented_bam_pbi
   non_passing_bam:
     type: File
     outputSource: skera_split/non_passing_bam
+  non_passing_bam_pbi:
+    type: File?
+    outputSource: skera_split/non_passing_bam_pbi
   segmented_dataset:
     type: File
     outputSource: skera_split/segmented_dataset

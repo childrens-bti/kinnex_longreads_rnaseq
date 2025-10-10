@@ -99,10 +99,20 @@ outputs:
     type: File
     outputBinding:
       glob: $(inputs.out_prefix).bam
+  segmented_bam_pbi:
+    type: File?
+    doc: PacBio BAM index (.pbi) for segmented_bam
+    outputBinding:
+      glob: $(inputs.out_prefix).bam.pbi
   non_passing_bam:
     type: File
     outputBinding:
       glob: $(inputs.out_prefix).non_passing.bam
+  non_passing_bam_pbi:
+    type: File?
+    doc: PacBio BAM index (.pbi) for non_passing_bam
+    outputBinding:
+      glob: $(inputs.out_prefix).non_passing.bam.pbi
   segmented_dataset:
     type: File
     outputBinding:

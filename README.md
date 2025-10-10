@@ -30,30 +30,29 @@ The HiFi BAM file (e.g., `m84081_250911_195056_s1.hifi_reads.bcM0001.bam`) is ge
 **Alternative**: Longbow (Broad Institute)
 
 Segments MAS-Seq/Kinnex concatenated reads into individual cDNAs by:
-- Removing 5'/3' adapters and primers
-- Trimming poly(A/T) tails
-- Removing linkers/barcodes/UMIs
+- Removing segmentation adapters
 - Splitting concatenated inserts into individual segments
 
 **Key Outputs**:
 - `segmented.bam` - Successfully segmented reads
 - `segmented.non_passing.bam` - Failed segmentation
-- `read_segmentation.report.json` - Segmentation statistics
+- `segmented.summary.csv` - Segmentation statistics
 
 #### 3. **Primer Detection & Full-Length Classification**
 **Tools**: `lima` + `isoseq refine`
 
 **Step 3a: Primer Detection**
 ```bash
-lima --isoseq --peek-guess segmented.bam primers.fasta fl_transcripts.bam
+lima --isoseq --peek-guess segmented.bam primers.fasta fl.barcode-pair.bam
 ```
+- Example of `barcode-pair`: `IsoSeqX_bc01_5p--IsoSeqX_3p`
 - Detects Iso-Seq primers in segmented reads
 - Demultiplexes by sample (creates files for each barcode)
 - Auto-detects primer orientation
 
 **Step 3b: Refinement**
 ```bash
-isoseq refine --require-polya fl_transcripts.IsoSeqX_bc01_5p--IsoSeqX_3p.bam primers.fasta flnc-1.bam
+isoseq refine --require-polya fl.barcode-pair.bam primers.fasta flnc.barcode-pair.bam
 ```
 - Removes remaining primer sequences
 - Identifies full-length reads (both 5' and 3' primers present)
@@ -244,10 +243,28 @@ The pipeline generates several key output categories:
 - **`isoseq.report.json`**: Overall pipeline performance metrics
 - **`read_segmentation.report.json`**: Segmentation success rates
 
-#### Intermediate Files
-- **`flnc-*.bam`**: Full-length non-concatemer reads
-- **`transcripts-*.fasta`**: Consensus sequences from clustering
-- **`mapped-*.bam`**: Genome-aligned transcripts
+#### Test Outputs (from outputs/)
+
+**skera_test/**
+- segmented.bam, segmented.bam.pbi: Segmented reads
+- segmented.non_passing.bam, segmented.non_passing.bam.pbi: Reads failing segmentation
+- segmented.consensusreadset.xml: Segmented dataset XML
+- segmented.summary.csv, segmented.ligations.csv, segmented.read_lengths.csv: Segmentation stats
+- segmented.found_adapters.csv.gz: Adapter detection
+- skera.log: Skera run log
+
+**lima_isoseq_test/**
+- fl.IsoSeqX_bc0*_5p--IsoSeqX_3p.bam, .bam.pbi: Demultiplexed BAMs per barcode
+- fl.consensusreadset.xml: Lima output dataset XML
+- fl.lima.counts, fl.lima.report, fl.lima.summary: Lima stats and reports
+- lima-isoseq.log: Lima run log
+
+**isoseq_refine_test/**
+- flnc.IsoSeqX_bc0*_5p--IsoSeqX_3p.bam: Refined FLNC BAMs per barcode
+- flnc.IsoSeqX_bc0*_5p--IsoSeqX_3p.refine.log: Refine run logs
+- flnc.IsoSeqX_bc0*_5p--IsoSeqX_3p.report.csv: Refine per-barcode reports
+- flnc.flnc.IsoSeqX_bc0*_5p--IsoSeqX_3p.bam.bam: Additional FLNC BAMs (from scatter runs)
+- flnc.flnc.IsoSeqX_bc0*_5p--IsoSeqX_3p.bam.report.csv: Additional reports (from scatter runs)
 
 ## 🔧 Troubleshooting
 

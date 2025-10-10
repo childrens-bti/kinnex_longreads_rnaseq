@@ -33,7 +33,7 @@ steps:
       in_dataset: list_bams/bam_files
       barcodes: barcodes
       biosample_name:
-        valueFrom: $(inputs.in_dataset.nameroot.replace(/^fl\./,'flnc.') + '.bam')
+        valueFrom: $(inputs.in_dataset.nameroot.replace(/^fl\./,''))
       threads: threads
       log_level: log_level
       require_polya: require_polya

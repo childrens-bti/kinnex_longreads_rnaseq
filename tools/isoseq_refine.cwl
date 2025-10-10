@@ -42,7 +42,7 @@ arguments:
   - position: 3
     valueFrom: $("flnc." + inputs.biosample_name + ".bam")
 
-stderr: $(inputs.biosample_name.replace(/\.bam$/, '.refine.log'))
+stderr: $("flnc." + inputs.biosample_name + ".refine.log")
 outputs:
   out_flnc_bam:
     type: File

@@ -1,0 +1,3 @@
+flnc_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/outputs/isoseq_refine_test

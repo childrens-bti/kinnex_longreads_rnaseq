@@ -20,15 +20,15 @@ outputs:
   files: File[]
 
 expression: |-
-    ${
-    const rx = new RegExp(inputs.pattern);               // case-sensitive by default
-    const entries = (inputs.dir.listing || []).filter(e =>
-        e.class === 'File' && rx.test(e.basename)
-    );
-    if (!entries.length) {
-        throw new Error('No files matched pattern "' + inputs.pattern + '" in ' +
-                        (inputs.dir.path || inputs.dir.basename));
-    }
-    entries.sort((a,b) => a.basename.localeCompare(b.basename));
-    return { files: entries };
-    }
+  ${
+  var rx = new RegExp(inputs.pattern); // case-sensitive by default
+  var entries = (inputs.dir.listing || []).filter(function (e) {
+    return e.class === 'File' && rx.test(e.basename);
+  });
+  if (!entries.length) {
+    throw new Error('No files matched pattern "' + inputs.pattern + '" in ' +
+            (inputs.dir.path || inputs.dir.basename));
+  }
+  entries.sort(function (a, b) { return a.basename.localeCompare(b.basename); });
+  return { files: entries };
+  }

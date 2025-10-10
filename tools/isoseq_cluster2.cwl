@@ -1,29 +1,74 @@
 cwlVersion: v1.2
 class: CommandLineTool
-label: Iso-Seq cluster2 consensus
+label: Cluster FLNC reads and generate transcripts
 requirements:
   DockerRequirement:
-    dockerPull: kinnex_longreads
+    dockerPull: pgc-images.sbgenomics.com/chaodi/kinnex_longreads:v1.0
+  ShellCommandRequirement: {}
 baseCommand: [isoseq, cluster2]
+
 inputs:
-  flnc_bam:
+  flnc_input:
     type: File
+    doc: Input FLNC BAM, ConsensusReadSet XML, or FOFN
     inputBinding:
       position: 1
-  out_fasta:
+  transcripts_bam:
     type: string
-    default: transcripts-1.fasta
+    doc: Output transcripts BAM
     inputBinding:
       position: 2
-  verbose:
-    type: boolean
-    default: true
+  threads:
+    type: int
+    default: 0
+    doc: Number of threads to use, 0 means autodetection
     inputBinding:
-      prefix: --verbose
-stdout: isoseq_cluster2.stdout.txt
-stderr: isoseq_cluster2.stderr.txt
+      prefix: -j
+  log_level:
+    type: string?
+    doc: Set log level (TRACE, DEBUG, INFO, WARN, FATAL)
+    inputBinding:
+      prefix: --log-level
+  log_file:
+    type: string?
+    doc: Log to a file, instead of stderr
+    inputBinding:
+      prefix: --log-file
+  singletons:
+    type: boolean?
+    doc: Output FLNCs that could not be clustered
+    inputBinding:
+      prefix: --singletons
+  sort_threads:
+    type: int?
+    doc: Number of sorting threads per BAM file. Defaults to -j
+    inputBinding:
+      valueFrom: "$(inputs.sort_threads !== null ? inputs.sort_threads : inputs.threads)"
+      prefix: --sort-threads
+  write_bam:
+    type: string?
+    doc: Write annotated BAM file
+    inputBinding:
+      prefix: --write-bam
+
 outputs:
-  transcripts_fa:
+  transcripts_output:
     type: File
+    doc: Output transcripts BAM
     outputBinding:
-      glob: $(inputs.out_fasta)
+      glob: $(inputs.transcripts_bam)
+  singletons_output:
+    type: File?
+    doc: Optional singletons output if --singletons is used
+    outputBinding:
+      glob: "*.singletons.*"
+  annotated_bam:
+    type: File?
+    doc: Optional annotated BAM if --write-bam is used
+    outputBinding:
+      glob: $(inputs.write_bam)
+  cluster_log:
+    type: File?
+    doc: Log file if --log-file is specified
+    outputBinding:
+      glob: $(inputs.log_file)

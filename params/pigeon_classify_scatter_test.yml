@@ -1,0 +1,16 @@
+collapse_gff_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/outputs/isoseq_collapse_scatter_test
+flnc_count_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/outputs/isoseq_collapse_scatter_test
+annotation_gtf:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/gencode.v39.primary_assembly.annotation.gtf
+reference_fa:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/GRCh38.primary_assembly.genome.fa
+
+
+# threads: 4
+# log_level: INFO

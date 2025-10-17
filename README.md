@@ -120,31 +120,68 @@ Merges redundant transcripts sharing identical exon-intron structures to create 
 pigeon classify collapse_isoforms-1.gff reference.fasta annotation.gtf --fl flnc_count-1.txt
 ```
 
-**Step 7b: Quality Filtering**
+**Step 7b: Quality Filtering & Reporting**
 ```bash
-pigeon filter pigeon.sorted-1.gff --isoforms collapse_isoforms-1.fasta
+pigeon filter pigeon_classification-1.txt --isoforms collapse_isoforms-1.sorted.gff
+pigeon report pigeon.filtered_lite_classification-1.txt output.saturation.txt
 ```
 
-Classifies transcript isoforms and applies quality filters based on structural completeness and support.
+Classifies transcript isoforms and applies quality filters based on structural completeness and support, then generates saturation analysis reports.
 
 **Key Outputs**:
-- `pigeon.sorted-*.gff` - All classified isoforms
-- `pigeon.classification-*.txt` - Structural classifications
-- `pigeon_filtered.sorted-*.gff` - **Quality-filtered isoforms (recommended)**
-- `pigeon_filtered_report-*.json` - Filtering statistics
+- `*.classification.txt` - Structural classifications per transcript
+- `*.junctions.txt` - Junction information and coverage
+- `*.filtered_lite_classification.txt` - Quality-filtered classifications
+- `*.filtered_lite_junctions.txt` - Filtered junction information  
+- `*.filtered_lite_reasons.txt` - Filtering reason codes
+- `*.sorted.filtered_lite.gff` - Quality-filtered isoform annotations
+- `*.filtered.report.json` - Detailed filtering statistics
+- `*.filtered.summary.txt` - Summary filtering metrics
+- `*.saturation.txt` - Transcript saturation analysis
 
 ## 📁 Repository Structure
 
 ```
 kinnex_longreads/
 ├── tools/                   # CWL CommandLineTool definitions
+│   ├── isoseq_cluster2.cwl
+│   ├── isoseq_collapse.cwl  
+│   ├── isoseq_refine.cwl
+│   ├── lima_isoseq.cwl
+│   ├── list_files_by_pattern.cwl
+│   ├── pbmm2_align.cwl
+│   ├── pigeon_classify.cwl
+│   ├── pigeon_filter.cwl
+│   ├── pigeon_prepare.cwl
+│   ├── pigeon_report.cwl
+│   └── skera_split.cwl
+├── workflows/               # CWL workflows and subworkflows  
+│   ├── isoseq_cluster2_scatter.cwl
+│   ├── isoseq_collapse_scatter.cwl
+│   ├── isoseq_refine_scatter.cwl
+│   ├── lima_isoseq_run.cwl
+│   ├── pbmm2_align_scatter.cwl
+│   ├── pigeon_classify_scatter.cwl
+│   ├── pigeon_filter_report_scatter.cwl
+│   └── skera.cwl
 ├── scripts/                 # Analysis scripts   
-├── workflows/               # CWL workflows and subworkflows
 ├── data/                    # Input data
 ├── manifests/               # Manifest files 
 ├── params/                  # Workflow parameter files
+│   ├── *_test.yml          # Test parameter files for each workflow
+│   └── kinnex_params.yml   # Main pipeline parameters
 ├── outputs/                 # Pipeline outputs
+│   ├── skera_test/
+│   ├── lima_isoseq_test/
+│   ├── isoseq_refine_test/
+│   ├── isoseq_cluster2_test/
+│   ├── pbmm2_align_scatter_test/
+│   ├── isoseq_collapse_scatter_test/
+│   ├── pigeon_classify_scatter_test/
+│   └── pigeon_filter_report_scatter_test/
 ├── envs/                    # Conda environments
+│   └── cwl_env.yml
+├── run_data.sh              # Test execution scripts
 ├── main_workflow.cwl        # Main workflow
 ├── README.md
 └── LICENSE
@@ -153,9 +190,11 @@ kinnex_longreads/
 ## 🎯 Main Pipeline Outputs
 
 ### Primary Files for Downstream Analysis
-- **Transcript Models**: `pigeon_filtered.sorted-*.gff` + `collapse_isoforms-*.fasta`
+
+- **Transcript Models**: `*.sorted.filtered_lite.gff` + `collapse_isoforms-*.fasta`
 - **Quantification**: `collapse_isoforms.flnc_count-*.txt` or `sample*.transcripts.fl_counts.csv`
-- **Quality Metrics**: `pigeon_filtered_report-*.json`
+- **Quality Metrics**: `*.filtered.report.json` and `*.filtered.summary.txt`
+- **Saturation Analysis**: `*.saturation.txt` files for transcript discovery completeness
 
 ## 🚀 Usage
 
@@ -234,12 +273,16 @@ cwltool --outdir outputs/ --default-container kinnex_longreads main_workflow.cwl
 The pipeline generates several key output categories:
 
 #### Final Results
-- **`pigeon_filtered.sorted-*.gff`**: Quality-filtered transcript isoforms (recommended for analysis)
+
+- **`*.sorted.filtered_lite.gff`**: Quality-filtered transcript isoforms (recommended for analysis)
 - **`collapse_isoforms-*.fasta`**: Final isoform sequences
 - **`collapse_isoforms.flnc_count-*.txt`**: Quantification data (read support per isoform)
 
 #### Quality Control
-- **`pigeon_filtered_report-*.json`**: Comprehensive filtering and quality statistics
+
+- **`*.filtered.report.json`**: Comprehensive filtering and quality statistics
+- **`*.filtered.summary.txt`**: Summary of filtering statistics
+- **`*.saturation.txt`**: Transcript discovery saturation metrics
 - **`isoseq.report.json`**: Overall pipeline performance metrics
 - **`read_segmentation.report.json`**: Segmentation success rates
 

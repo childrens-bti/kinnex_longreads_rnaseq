@@ -112,3 +112,8 @@ outputs:
   summary_txts:
     type: File[]
     outputSource: classify_each/summary_txt
+  prepared_isoforms_gffs:
+    type: File[]
+    outputSource: prepare_isoforms/prepared_isoforms
+    pickValue: all_non_null
+    doc: Sorted isoforms GFF files from prepare step (to be used by filter workflow)

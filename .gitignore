@@ -41,7 +41,6 @@ data/*
 manifests/*
 !manifests/.gitkeep
 
-params/*fasta
 .cwl-out/
 .cwl-tmp/
 

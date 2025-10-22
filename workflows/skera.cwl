@@ -75,7 +75,7 @@ outputs:
     type: File?
     outputSource: skera_split/non_passing_bam_pbi
   segmented_dataset:
-    type: File
+    type: File?
     outputSource: skera_split/segmented_dataset
   summary_csv:
     type: File?

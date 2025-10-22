@@ -280,12 +280,12 @@ hifi_dir:
 # Primers for segmentation (Skera)
 primers_fa:
   class: File
-  path: data/primers/mas8_primers.fasta
+  path: params/mas8_primers.fasta
 
 # Primers for demultiplexing (Lima) - must have _5p/_3p suffixes
 lima_barcodes:
   class: File
-  path: data/primers/IsoSeq_v2_primers_12.fasta
+  path: params/IsoSeq_v2_primers_12.fasta
 
 # Reference genome
 reference_fa:
@@ -295,7 +295,7 @@ reference_fa:
 # Gene annotation
 annotation_gtf:
   class: File
-  path: data/annotation/gencode.v39.primary_assembly.annotation.gtf
+  path: data/reference/gencode.v39.primary_assembly.annotation.gtf
 ```
 
 **Optional parameters to tune:**
@@ -513,7 +513,6 @@ outputs/kinnex_output/
 **Solution**:
 - Increase EC2 instance size (recommend r6i.4xlarge or larger)
 - Reduce thread counts in `params/main_params.yml`
-- Process smaller data subsets
 - Enable swap space on EC2 instance
 
 #### Missing or Incomplete Outputs
@@ -523,7 +522,6 @@ outputs/kinnex_output/
 - Check if workflow completed successfully (exit code 0)
 - Intermediate files are in `.cwl-out/*/` during execution
 - CWL only copies outputs to final directory on **successful completion**
-- Re-run the workflow after fixing any errors
 
 #### Primers File Format Error
 
@@ -531,22 +529,13 @@ outputs/kinnex_output/
 **Solution**:
 - Lima/Refine require primers with `_5p` and `_3p` suffixes
 - Use `IsoSeq_v2_primers_12.fasta` for `lima_barcodes` parameter
-- Skera can use simpler primer files like `mas8_primers.fasta`
-
-#### Docker Permission Errors
-
-**Problem**: Docker cannot access S3-mounted files  
-**Solution**:
-- Enable FUSE `user_allow_other` in `/etc/fuse.conf`
-- Mount S3 with `--allow-other` flag
-- Ensure Docker daemon is running with proper permissions
+- `Skera split` use simpler primer files like `mas8_primers.fasta`
 
 #### Reference File Issues
 
 **Problem**: Reference genome or annotation errors  
 **Solution**:
-- Ensure reference genome is uncompressed or bgzip-compressed FASTA
-- Verify GTF file follows standard format
+- Ensure reference genome fasta and gtf files are **uncompressed**
 - Check file paths are accessible to Docker containers
 - Validate file integrity with `samtools faidx` or `gtf_validator`
 
@@ -559,37 +548,19 @@ outputs/kinnex_output/
 cwltool --validate main_workflow.cwl
 ```
 
-#### Test with Small Dataset
+#### Test with Small Dataset and Check Individual Steps
 
-```bash
-# Use 1% sampled data for testing
-cwltool \
-  --outdir outputs/test_run \
-  main_workflow.cwl \
-  params/test_params.yml
+- Use 0.1% sampled hifi reads (~80k), bam file can be downloaded to data/
 ```
-
-#### Check Individual Steps
-
-Run subworkflows independently to isolate issues:
+aws s3 cp s3://bti-openaccess-us-east-1-bti-bfx/kinnex_longreads/data/sampled_hifi_reads/ data/sampled_hifi_reads/ --recursive --profile YOUR-CNH-SSO-PROFILE
+```
+- Run subworkflows independently to isolate issues:
 
 ```bash
-# Test skera only
-cwltool workflows/skera.cwl params/skera_test.yml
-
-# Test lima only
-cwltool workflows/lima_isoseq_run.cwl params/lima_isoseq_test.yml
+bash run_data.sh
 ```
 
 ## ⚙️ Resource Requirements
-
-### Minimum Configuration
-
-For testing with 1% sampled data:
-- **CPU**: 8 cores
-- **RAM**: 32 GB
-- **Storage**: 100 GB
-- **EC2 Instance**: t3.2xlarge or equivalent
 
 ### Recommended Configuration
 
@@ -613,11 +584,6 @@ For full production datasets:
 - Cleaned after successful completion with cleanup commands
 - Keep during debugging with `--leave-tmpdir`
 
-**Final outputs**:
-- Typically 1-2x input data size
-- Includes BAMs, GFFs, FASTAs, and reports
-
-**Recommended**: Use EC2 instances with EBS volumes sized appropriately
 
 ## 🚀 Future Plans
 

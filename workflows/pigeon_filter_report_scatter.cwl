@@ -15,6 +15,11 @@ inputs:
     type: string
     default: "^pigeon\\..*_classification\\.txt$"
     doc: Pattern to match classification files
+  junctions_dir: Directory
+  junctions_pattern:
+    type: string
+    default: "^pigeon\\..*_junctions\\.txt$"
+    doc: Pattern to match junctions files
   isoforms_gff_dir:
     type: Directory?
     doc: Optional directory containing sorted isoforms GFF files from classify step
@@ -73,9 +78,8 @@ steps:
   list_junctions_files:
     run: ../tools/list_files_by_pattern.cwl
     in:
-      dir: classification_dir
-      pattern: 
-        valueFrom: "^pigeon\\..*_junctions\\.txt$"
+      dir: junctions_dir
+      pattern: junctions_pattern
     out: [files]
 
   list_isoforms_gffs:

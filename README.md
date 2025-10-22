@@ -335,7 +335,20 @@ cwltool \
 - `--tmp-outdir-prefix ./.cwl-out/`: Store intermediate outputs locally
 - `--outdir outputs/kinnex_output`: Final output directory
 
-#### 5. Monitor Progress
+
+#### 5. Test with Small Dataset and Check Individual Steps
+
+- Use 0.1% sampled hifi reads (~80k), bam file can be downloaded to data/
+```
+aws s3 cp s3://bti-openaccess-us-east-1-bti-bfx/kinnex_longreads/data/sampled_hifi_reads/ data/sampled_hifi_reads/ --recursive --profile YOUR-CNH-SSO-PROFILE
+```
+- Run subworkflows independently to isolate issues:
+
+```bash
+bash run_data.sh
+```
+
+##### Monitor Progress
 
 The pipeline executes 14 major steps sequentially:
 
@@ -538,27 +551,6 @@ outputs/kinnex_output/
 - Ensure reference genome fasta and gtf files are **uncompressed**
 - Check file paths are accessible to Docker containers
 - Validate file integrity with `samtools faidx` or `gtf_validator`
-
-### Validation & Testing
-
-#### Validate Workflow Syntax
-
-```bash
-# Check CWL syntax before running
-cwltool --validate main_workflow.cwl
-```
-
-#### Test with Small Dataset and Check Individual Steps
-
-- Use 0.1% sampled hifi reads (~80k), bam file can be downloaded to data/
-```
-aws s3 cp s3://bti-openaccess-us-east-1-bti-bfx/kinnex_longreads/data/sampled_hifi_reads/ data/sampled_hifi_reads/ --recursive --profile YOUR-CNH-SSO-PROFILE
-```
-- Run subworkflows independently to isolate issues:
-
-```bash
-bash run_data.sh
-```
 
 ## ⚙️ Resource Requirements
 

@@ -84,6 +84,8 @@ inputs:
     doc: When true, write PREFIX.consensusreadset.xml (else PREFIX.bam)
     inputBinding:
       position: 5
+      valueFrom: |
+        $(self ? 'true' : 'false')
   log_level:
     type: string?
     doc: Set log level (TRACE, DEBUG, INFO, WARN, FATAL)
@@ -114,7 +116,8 @@ outputs:
     outputBinding:
       glob: $(inputs.out_prefix).non_passing.bam.pbi
   segmented_dataset:
-    type: File
+    type: File?
+    doc: ConsensusReadSet XML (only created when use_dataset_xml=true and may not be output by skera)
     outputBinding:
       glob: $(inputs.out_prefix).consensusreadset.xml
   summary_csv:

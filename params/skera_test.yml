@@ -1,6 +1,7 @@
 hifi_dir:
   class: Directory
-  path: /home/ubuntu/kinnex_longreads/tests
+  path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/
+  
 
 primers_fa:
   class: File

@@ -30,7 +30,7 @@ The HiFi BAM file (e.g., `m84081_250911_195056_s1.hifi_reads.bcM0001.bam`) is ge
 **Alternative**: Longbow (Broad Institute)
 
 Segments MAS-Seq/Kinnex concatenated reads into individual cDNAs by:
-- Removing segmentation adapters
+- Removing [segmentation adapters](https://skera.how/adapters)
 - Splitting concatenated inserts into individual segments
 
 **Key Outputs**:
@@ -383,10 +383,10 @@ The pipeline executes 14 major steps sequentially:
 ### 📋 Input Data Requirements
 
 - **HiFi BAM files**: High-fidelity consensus reads (`.bam` + `.bam.pbi` index)
-- **Primers FASTA** (Skera): Adapter/barcode sequences (e.g., `mas8_primers.fasta`)
-- **Barcodes FASTA** (Lima): Primers with `_5p` and `_3p` suffixes (e.g., `IsoSeq_v2_primers_12.fasta`)
-- **Reference genome**: Uncompressed or bgzip-compressed FASTA
-- **Annotation GTF**: Standard GTF format for gene annotations
+- **Adapters FASTA** (Skera): Adapter sequences used for concatermization (e.g., `mas8_primers.fasta`)
+- **Barcodes FASTA** (Lima): Barcoded primers with `_5p` and `_3p` suffixes (e.g., `IsoSeq_v2_primers_12.fasta`)
+- **Reference genome**: Uncompressed FASTA
+- **Annotation GTF**: Standard GTF format for gene annotations (also need to be uncompressed)
 
 ### 📤 Pipeline Outputs
 

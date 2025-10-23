@@ -10,8 +10,8 @@ hifi_dir:
   class: Directory
   path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/
 
-# Primers/adapters FASTA file
-primers_fa:
+# Aadapters FASTA file
+adapters_fa:
   class: File
   path: /home/ubuntu/kinnex_longreads/params/mas8_primers.fasta
 

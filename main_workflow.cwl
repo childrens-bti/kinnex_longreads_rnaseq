@@ -26,9 +26,9 @@ inputs:
     type: Directory
     doc: Directory containing HiFi BAM files (e.g., *bc*.bam)
   
-  primers_fa:
+  adapters_fa:
     type: File
-    doc: Adapters/barcodes FASTA file (e.g., mas8_primers.fasta)
+    doc: Adapters FASTA file (e.g., mas8_primers.fasta)
   
   reference_fa:
     type: File
@@ -163,7 +163,7 @@ steps:
     run: workflows/skera.cwl
     in:
       hifi_dir: hifi_dir
-      primers_fa: primers_fa
+      adapters_fa: adapters_fa
       out_prefix: skera_out_prefix
       threads: skera_threads
       use_dataset_xml: skera_use_dataset_xml

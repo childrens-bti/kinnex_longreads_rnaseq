@@ -3,7 +3,7 @@ hifi_dir:
   path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/
   
 
-primers_fa:
+adapters_fa:
   class: File
   path: /home/ubuntu/kinnex_longreads/params/mas8_primers.fasta
 

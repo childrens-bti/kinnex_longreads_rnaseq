@@ -252,14 +252,18 @@ docker buildx build --platform linux/amd64 -t pgc-images.sbgenomics.com/chaodi/k
 
 #### 2. Data Access from S3
 
-Mount your S3 bucket to access input data:
+Mount your S3 bucket to `data/` to access input data:
 
 ```bash
 # Mount S3 bucket containing HiFi reads
-bash mount_s3.sh your-bucket-name data/your-bucket-name
+bash mount_s3.sh your-bucket-name
+
+# Mount S3 bucket containing reference files
+bash mount_s3.sh bti-openaccess-us-east-1-prd-references
 
 # Verify data is accessible
-ls data/your-bucket-name/
+ls data/your-bucket-name/path-to-your-files
+ls data/bti-openaccess-us-east-1-prd-references/
 ```
 
 #### 3. Configure Pipeline Parameters
@@ -277,8 +281,8 @@ hifi_dir:
   class: Directory
   path: data/your-bucket-name/path/to/hifi_bams/
 
-# Primers for segmentation (Skera)
-primers_fa:
+# Adapters for segmentation (Skera)
+adapters_fa:
   class: File
   path: params/mas8_primers.fasta
 

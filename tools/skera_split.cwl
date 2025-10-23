@@ -63,7 +63,7 @@ inputs:
     doc: Input dataset (BAM or ConsensusReadSet XML)
     inputBinding:
       position: 1
-  primers_fa:
+  adapters_fa:
     type: File
     doc: Adapters FASTA or AdapterSet XML (per skera split)
     inputBinding:

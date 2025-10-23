@@ -12,7 +12,7 @@ inputs:
   out_prefix:
     type: string
     default: segmented
-  primers_fa:
+  adapters_fa:
     type: File
     doc: Adapters FASTA (e.g., params/mas8_primers.fasta)
   threads:
@@ -53,7 +53,7 @@ steps:
             // return the File object itself (no copy here)
             return list[0];
           }
-      primers_fa: primers_fa
+      adapters_fa: adapters_fa
       out_prefix: out_prefix
       threads: threads
       use_dataset_xml: use_dataset_xml

@@ -78,3 +78,12 @@ cwltool \
 	--outdir outputs/kinnex_output \
 	main_workflow.cwl \
 	params/kinnex_params.yml
+
+# run resume from cluster workflow
+# cwltool \
+# 	--leave-tmpdir \
+# 	--tmpdir-prefix ./.cwl-tmp/ \
+# 	--tmp-outdir-prefix ./.cwl-out/ \
+# 	--outdir outputs/kinnex_output_resumed \
+# 	resume_from_cluster.cwl \
+# 	params/resume_from_cluster_params.yml

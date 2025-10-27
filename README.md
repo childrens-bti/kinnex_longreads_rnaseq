@@ -359,18 +359,18 @@ The pipeline executes 14 major steps sequentially:
 | Step | Tool | Description | 0.1% Sample Runtime* |
 |------|------|-------------|---------------------|
 | 1 | Skera | Segment HiFi reads | ~3 min |
-| 2 | Lima | Demultiplex by barcodes | ~12 min |
+| 2 | Lima | Demultiplex by barcodes | ~10 min |
 | 3 | IsoSeq Refine | Trim & filter FLNC reads | ~1 min |
-| 4 | IsoSeq Cluster2 | Cluster into transcript models | ~5 min |
-| 5 | PBMM2 | Align transcripts to reference | ~8 min |
+| 4 | IsoSeq Cluster2 | Cluster into transcript models | ~12 min |
+| 5 | PBMM2 | Align transcripts to reference | ~5 min |
 | 6 | IsoSeq Collapse | Collapse into unique isoforms | <1 min |
-| 7 | Pigeon Classify | Classify against annotation | ~5 min |
+| 7 | Pigeon Classify | Classify against annotation | ~1 min |
 | 8 | Pigeon Filter & Report | Quality filter & reports | <1 min |
 
 **Total time for 0.1% sample:** ~35 minutes (6 barcodes, ~80k HiFi reads)
 
 *Based on actual run with 0.1% sampled HiFi reads (6 barcodes) on `m6i.4xlarge` EC2 instance (16 vCPUs, 64 GB RAM)  
-**Full dataset projection (100% = 1000x data): Roughly 10-30 hours** depending on dataset complexity and clustering efficiency (not all steps scale linearly). Recommend testing with 1% and 10% samples to calibrate runtime estimates for your specific data.
+**Full dataset projection (100% = 1000x data): Roughly 10-15 hours** depending on dataset complexity and clustering efficiency (not all steps scale linearly). Recommend testing with 1% and 10% samples to calibrate runtime estimates for your specific data.
 
 #### 6. Output Collection
 
@@ -503,12 +503,12 @@ outputs/kinnex_output/
 ├── mapped.*.bam                                     # PBMM2 aligned BAMs
 ├── collapse_isoforms.*.gff                          # Collapse isoform models
 ├── collapse_isoforms.*.fasta                        # Isoform sequences
-├── collapse_isoforms.*.flnc_count.txt              # Quantification
+├── collapse_isoforms.*.flnc_count.txt               # Quantification
 ├── pigeon.*_classification.txt                      # Classifications
-├── pigeon.*_junctions.txt                          # Junction info
-├── pigeon.*.filtered_lite_classification.txt       # Filtered classifications
-├── collapse_isoforms.*.sorted.filtered_lite.gff   # Final filtered isoforms
-└── pigeon.*.saturation.txt                         # Saturation reports
+├── pigeon.*_junctions.txt                           # Junction info
+├── pigeon.*.filtered_lite_classification.txt        # Filtered classifications
+├── collapse_isoforms.*.sorted.filtered_lite.gff     # Final filtered isoforms
+└── pigeon.*.saturation.txt                          # Saturation reports
 ```
 
 ## 🔧 Troubleshooting

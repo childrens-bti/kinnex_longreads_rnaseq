@@ -4,8 +4,8 @@ label: Iso-Seq refine full-length detection
 
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/chaodi/kinnex_longreads:v1.0
-  ShellCommandRequirement: {}
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+  InlineJavascriptRequirement: {}
 
 baseCommand: [isoseq, refine]
 

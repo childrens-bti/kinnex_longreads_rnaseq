@@ -247,7 +247,7 @@ conda env create -f envs/cwl_env.yml
 conda activate cwl_env
 
 # Build the Docker container with all tools
-docker buildx build --platform linux/amd64 -t pgc-images.sbgenomics.com/chaodi/kinnex_longreads:v1.0 .
+docker buildx build --platform linux/amd64 -t pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0 .
 ```
 
 #### 2. Data Access from S3
@@ -284,12 +284,12 @@ hifi_dir:
 # Adapters for segmentation (Skera)
 adapters_fa:
   class: File
-  path: params/mas8_primers.fasta
+  path: data/references/mas8_primers.fasta
 
-# Primers for demultiplexing (Lima) - must have _5p/_3p suffixes
+# Barcoded primers for demultiplexing (Lima) - must have _5p/_3p suffixes
 lima_barcodes:
   class: File
-  path: params/IsoSeq_v2_primers_12.fasta
+  path: data/references/IsoSeq_v2_primers_12.fasta
 
 # Reference genome
 reference_fa:

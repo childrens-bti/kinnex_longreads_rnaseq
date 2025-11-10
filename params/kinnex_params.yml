@@ -15,12 +15,12 @@ hifi_dir:
 # Aadapters FASTA file
 adapters_fa:
   class: File
-  path: /home/ubuntu/kinnex_longreads/params/mas8_primers.fasta
+  path: /home/ubuntu/kinnex_longreads/data/references/mas8_primers.fasta
 
 # lima Barcode sequences FASTA file
 lima_barcodes:
   class: File
-  path: /home/ubuntu/kinnex_longreads/params/IsoSeq_v2_primers_12.fasta
+  path: /home/ubuntu/kinnex_longreads/data/references/IsoSeq_v2_primers_12.fasta
 
 # Reference genome FASTA
 reference_fa:

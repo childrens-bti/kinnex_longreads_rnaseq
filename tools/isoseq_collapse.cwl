@@ -3,7 +3,7 @@ class: CommandLineTool
 label: Iso-Seq collapse
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/chaodi/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   InlineJavascriptRequirement: {}
 baseCommand: [isoseq, collapse]
 inputs:

@@ -40,82 +40,82 @@ inputs:
   
   # Skera options
   skera_out_prefix:
-    type: string
+    type: string?
     default: segmented
   skera_threads:
-    type: int
+    type: int?
     default: 0
   skera_use_dataset_xml:
-    type: boolean
+    type: boolean?
     default: true
   
   # Lima options
   lima_out_prefix:
-    type: string
+    type: string?
     default: fl
   lima_barcodes:
     type: File
     doc: Barcode/Primer FASTA for lima demultiplexing
   lima_threads:
-    type: int
+    type: int?
     default: 0
   
   # Refine options
   refine_threads:
-    type: int
+    type: int?
     default: 0
   refine_require_polya:
-    type: boolean
+    type: boolean?
     default: true
   
   # Cluster options
   cluster_threads:
-    type: int
+    type: int?
     default: 0
   cluster_singletons:
-    type: boolean
+    type: boolean?
     default: false
   
   # PBMM2 options
   pbmm2_threads:
-    type: int
+    type: int?
     default: 0
   pbmm2_preset:
-    type: string
+    type: string?
     default: ISOSEQ
   pbmm2_sort:
-    type: boolean
+    type: boolean?
     default: true
   pbmm2_min_gap_comp_id_perc:
-    type: float
+    type: float?
     default: 95.0
   
   # Collapse options
   collapse_min_aln_coverage:
-    type: float
+    type: float?
     default: 0.99
   collapse_min_aln_identity:
-    type: float
+    type: float?
     default: 0.95
   collapse_max_fuzzy_junction:
-    type: int
+    type: int?
     default: 5
   collapse_max_5p_diff:
-    type: int
+    type: int?
     default: 50
   collapse_max_3p_diff:
-    type: int
+    type: int?
     default: 100
   collapse_do_not_collapse_extra_5exons:
-    type: boolean
+    type: boolean?
     default: true
   collapse_threads:
-    type: int
+    type: int?
     default: 0
   
   # Classify options
   classify_threads:
-    type: int
+    type: int?
     default: 0
   
   # Filter options
@@ -154,7 +154,7 @@ inputs:
   
   # General options
   log_level:
-    type: string
+    type: string?
     default: INFO
 
 steps:

@@ -9,12 +9,12 @@ requirements:
 
 inputs:
   hifi_dir: Directory
-  out_prefix:
-    type: string
-    default: segmented
   adapters_fa:
     type: File
     doc: Adapters FASTA (e.g., params/mas8_primers.fasta)
+  out_prefix:
+    type: string
+    default: segmented
   threads:
     type: int
     default: 0
@@ -22,7 +22,8 @@ inputs:
     type: boolean
     default: true
   log_level:
-    type: string?
+    type: string
+    default: INFO
   log_file:
     type: string?
 

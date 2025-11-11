@@ -10,13 +10,13 @@ requirements:
 inputs:
   flnc_dir: Directory
   threads:
-    type: int
+    type: int?
     default: 0
   log_level:
-    type: string
+    type: string?
     default: INFO
   singletons:
-    type: boolean
+    type: boolean?
     default: false
   sort_threads:
     type: int?

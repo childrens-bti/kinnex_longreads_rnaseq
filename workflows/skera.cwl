@@ -13,16 +13,16 @@ inputs:
     type: File
     doc: Adapters FASTA (e.g., params/mas8_primers.fasta)
   out_prefix:
-    type: string
+    type: string?
     default: segmented
   threads:
-    type: int
+    type: int?
     default: 0
   use_dataset_xml:
-    type: boolean
+    type: boolean?
     default: true
   log_level:
-    type: string
+    type: string?
     default: INFO
   log_file:
     type: string?

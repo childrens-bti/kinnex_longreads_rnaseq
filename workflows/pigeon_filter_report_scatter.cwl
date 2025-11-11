@@ -64,7 +64,7 @@ inputs:
   
   # General
   log_level:
-    type: string
+    type: string?
     default: WARN
 
 steps:

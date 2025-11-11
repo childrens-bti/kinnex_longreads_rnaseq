@@ -69,17 +69,17 @@ inputs:
     inputBinding:
       position: 2
   out_prefix:
-    type: string
+    type: string?
     default: segmented
     inputBinding:
       position: 3
   threads:
-    type: int
+    type: int?
     default: 0
     inputBinding:
       position: 4
   use_dataset_xml:
-    type: boolean
+    type: boolean?
     default: true
     doc: When true, write PREFIX.consensusreadset.xml (else PREFIX.bam)
     inputBinding:

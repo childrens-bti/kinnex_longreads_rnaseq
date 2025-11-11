@@ -9,9 +9,9 @@ requirements:
 
 inputs:
   dir:
-    type: Directory
+    type: Directory?
   pattern:
-    type: string
+    type: string?
     doc: >
       ECMAScript/JS regular expression as a string, matched against the
       file basename. Example: "^fl\\..*\\.bam$"

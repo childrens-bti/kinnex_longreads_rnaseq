@@ -10,16 +10,16 @@ inputs:
   in_dataset: File
   barcodes: File
   out_prefix:
-    type: string
+    type: string?
     default: fl
   threads:
-    type: int
+    type: int?
     default: 0
   log_level:
-    type: string
+    type: string?
     default: INFO
   log_file:
-    type: string
+    type: string?
     default: lima-isoseq.log
 
 steps:

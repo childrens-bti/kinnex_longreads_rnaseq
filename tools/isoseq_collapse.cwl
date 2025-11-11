@@ -28,13 +28,13 @@ inputs:
   
   # Alignment Filter Options
   min_aln_coverage:
-    type: float
+    type: float?
     default: 0.99
     doc: Ignore alignments with less than minimum query read coverage
     inputBinding:
       prefix: --min-aln-coverage
   min_aln_identity:
-    type: float
+    type: float?
     default: 0.95
     doc: Ignore alignments with less than minimum alignment identity
     inputBinding:
@@ -42,25 +42,25 @@ inputs:
   
   # Collapse Options
   max_fuzzy_junction:
-    type: int
+    type: int?
     default: 5
     doc: Ignore mismatches or indels shorter than or equal to N
     inputBinding:
       prefix: --max-fuzzy-junction
   max_5p_diff:
-    type: int
+    type: int?
     default: 50
     doc: Maximum allowed 5' difference if on same exon
     inputBinding:
       prefix: --max-5p-diff
   max_3p_diff:
-    type: int
+    type: int?
     default: 100
     doc: Maximum allowed 3' difference if on same exon
     inputBinding:
       prefix: --max-3p-diff
   do_not_collapse_extra_5exons:
-    type: boolean
+    type: boolean?
     default: true
     doc: Do not collapse 5' shorter transcripts which miss one or multiple 5' exons to a longer transcript
     inputBinding:
@@ -68,13 +68,13 @@ inputs:
   
   # General Options
   threads:
-    type: int
+    type: int?
     default: 0
     doc: Number of threads to use, 0 means autodetection
     inputBinding:
       prefix: -j
   log_level:
-    type: string
+    type: string?
     default: WARN
     doc: Set log level
     inputBinding:

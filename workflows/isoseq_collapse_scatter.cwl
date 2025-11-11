@@ -12,39 +12,39 @@ inputs:
   aligned_bam_dir: Directory
   flnc_bam_dir: Directory
   aligned_pattern:
-    type: string
+    type: string?
     default: "^mapped\\..*\\.bam$"
     doc: >
       ECMAScript regex (as string) matched against aligned BAM basenames.
       Defaults to mapped BAMs from pbmm2 align.
   flnc_pattern:
-    type: string
+    type: string?
     default: "^flnc\\..*\\.bam$"
     doc: >
       ECMAScript regex (as string) matched against FLNC BAM basenames.
   min_aln_coverage:
-    type: float
+    type: float?
     default: 0.99
   min_aln_identity:
-    type: float
+    type: float?
     default: 0.95
   max_fuzzy_junction:
-    type: int
+    type: int?
     default: 5
   max_5p_diff:
-    type: int
+    type: int?
     default: 50
   max_3p_diff:
-    type: int
+    type: int?
     default: 100
   do_not_collapse_extra_5exons:
-    type: boolean
+    type: boolean?
     default: true
   threads:
-    type: int
+    type: int?
     default: 0
   log_level:
-    type: string
+    type: string?
     default: WARN
 
 steps:

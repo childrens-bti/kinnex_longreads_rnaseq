@@ -10,19 +10,19 @@ baseCommand: [pigeon, classify]
 
 inputs:
   isoforms_gff:
-    type: File
+    type: File?
     doc: Isoforms to classify (from isoseq collapse)
     inputBinding:
       position: 1
   annotation_gtf:
-    type: File
+    type: File?
     doc: Reference annotation GTF with .pgi index
     inputBinding:
       position: 2
     secondaryFiles:
       - .pgi
   reference_fa:
-    type: File
+    type: File?
     doc: Reference FASTA with .fai index
     inputBinding:
       position: 3
@@ -49,13 +49,13 @@ inputs:
   
   # General Options
   threads:
-    type: int
+    type: int?
     default: 0
     doc: Number of threads to use, 0 means autodetection
     inputBinding:
       prefix: -j
   log_level:
-    type: string
+    type: string?
     default: WARN
     doc: Set log level
     inputBinding:

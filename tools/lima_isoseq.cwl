@@ -18,13 +18,13 @@ inputs:
     inputBinding:
       position: 2
   out_prefix:
-    type: string
+    type: string?
     default: fl
     inputBinding:
       position: 3
       valueFrom: $( self + ".consensusreadset.xml" )
   threads:
-    type: int
+    type: int?
     default: 0
     inputBinding:
       prefix: -j
@@ -33,7 +33,7 @@ inputs:
     inputBinding:
       prefix: --log-level
   log_file:
-    type: string
+    type: string?
     default: lima-isoseq.log
     inputBinding:
       prefix: --log-file

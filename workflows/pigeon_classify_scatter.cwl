@@ -12,7 +12,7 @@ requirements:
 inputs:
   collapse_gff_dir: Directory
   collapse_gff_pattern:
-    type: string
+    type: string?
     default: "^collapse_isoforms\\..*\\.gff$"
     doc: Pattern to match collapse GFF files
   annotation_gtf:
@@ -25,16 +25,16 @@ inputs:
     type: Directory
     doc: Directory containing FLNC count files (*.flnc_count.txt) from isoseq collapse
   flnc_count_pattern:
-    type: string
+    type: string?
     default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
   out_prefix_base:
-    type: string
+    type: string?
     default: "pigeon"
   threads:
-    type: int
+    type: int?
     default: 0
   log_level:
-    type: string
+    type: string?
     default: WARN
 
 steps:
@@ -113,7 +113,8 @@ outputs:
     type: File[]
     outputSource: classify_each/summary_txt
   prepared_isoforms_gffs:
-    type: File[]
+    type:
+      type: array
+      items: ["null", File]
     outputSource: prepare_isoforms/prepared_isoforms
-    pickValue: all_non_null
     doc: Sorted isoforms GFF files from prepare step (to be used by filter workflow)

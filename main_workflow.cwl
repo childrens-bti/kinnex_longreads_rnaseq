@@ -470,7 +470,9 @@ outputs:
     type: File[]
     outputSource: classify/summary_txts
   prepared_isoforms_gffs:
-    type: File[]
+    type:
+      type: array
+      items: ["null", File]
     outputSource: classify/prepared_isoforms_gffs
   
   # Filter & Report outputs (final recommended outputs)

@@ -10,10 +10,10 @@ requirements:
 
 inputs:
   files:
-    type: File[]
+    type: File[]?
     doc: Array of files to include in the directory
   dir_name:
-    type: string
+    type: string?
     default: output_dir
     doc: Name for the output directory
 

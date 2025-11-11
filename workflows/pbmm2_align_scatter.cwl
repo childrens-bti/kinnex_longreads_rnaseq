@@ -12,22 +12,22 @@ inputs:
   reference: File
   bam_dir: Directory
   preset:
-    type: string
+    type: string?
     default: ISOSEQ
   threads:
-    type: int
+    type: int?
     default: 0
   sort:
-    type: boolean
+    type: boolean?
     default: true
   bam_index:
     type: string?
     doc: BAM index type for sorted output (NONE, BAI, CSI)
   min_gap_comp_id_perc:
-    type: float
+    type: float?
     default: 95.0
   log_level:
-    type: string
+    type: string?
     default: INFO
 
 steps:

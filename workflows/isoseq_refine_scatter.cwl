@@ -11,13 +11,13 @@ inputs:
   demux_dir: Directory
   barcodes: File
   threads:
-    type: int
+    type: int?
     default: 0
   log_level:
-    type: string
+    type: string?
     default: INFO
   require_polya:
-    type: boolean
+    type: boolean?
     default: true
 
 steps:

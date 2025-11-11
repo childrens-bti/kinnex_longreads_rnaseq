@@ -23,7 +23,7 @@ inputs:
   biosample_name:
     type: string
   threads:
-    type: int
+    type: int?
     default: 0
     inputBinding:
       prefix: -j
@@ -32,7 +32,7 @@ inputs:
     inputBinding:
       prefix: --log-level
   require_polya:
-    type: boolean
+    type: boolean?
     default: true
     inputBinding:
       prefix: --require-polya

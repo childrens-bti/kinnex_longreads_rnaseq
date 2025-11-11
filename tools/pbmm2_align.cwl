@@ -25,12 +25,12 @@ inputs:
     inputBinding:
       position: 3
   preset:
-    type: string
+    type: string?
     default: ISOSEQ
     inputBinding:
       prefix: --preset
   threads:
-    type: int
+    type: int?
     default: 0
     inputBinding:
       prefix: -j
@@ -43,7 +43,7 @@ inputs:
     inputBinding:
       prefix: --log-file
   sort:
-    type: boolean
+    type: boolean?
     default: true
     inputBinding:
       prefix: --sort
@@ -53,7 +53,7 @@ inputs:
     inputBinding:
       prefix: --bam-index
   min_gap_comp_id_perc:
-    type: float
+    type: float?
     default: 95.0
     doc: Minimum gap-compressed sequence identity in percent
     inputBinding:

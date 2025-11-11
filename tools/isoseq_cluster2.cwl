@@ -19,7 +19,7 @@ inputs:
     inputBinding:
       position: 2
   threads:
-    type: int
+    type: int?
     default: 0
     doc: Number of threads to use, 0 means autodetection
     inputBinding:

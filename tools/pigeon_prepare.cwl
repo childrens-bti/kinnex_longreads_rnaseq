@@ -22,7 +22,7 @@ inputs:
         ${return self.map(function(f) { return f.basename; });}
   
   log_level:
-    type: string
+    type: string?
     default: WARN
     doc: Set log level
     inputBinding:

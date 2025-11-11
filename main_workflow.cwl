@@ -415,7 +415,7 @@ outputs:
   transcripts_bam_pbis:
     type: File[]?
     outputSource: cluster/transcripts_bam_pbis
-  cluster_singletons:
+  cluster_singletons_outputs:
     type: File[]?
     outputSource: cluster/singletons_outputs
   cluster_annotated_bams:

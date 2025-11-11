@@ -54,7 +54,7 @@ steps:
       log_level: log_level
       log_file:
         valueFrom: $("pbmm2.align." + inputs.in_bam.basename.replace(/\.bam$/,'') + ".log")
-    out: [mapped_bam, log_file]
+    out: [mapped_bam, log_file_output]
     scatter: in_bam
     scatterMethod: dotproduct
 
@@ -64,4 +64,4 @@ outputs:
     outputSource: align_each/mapped_bam
   log_files:
     type: File[]?
-    outputSource: align_each/log_file
+    outputSource: align_each/log_file_output

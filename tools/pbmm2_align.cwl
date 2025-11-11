@@ -66,7 +66,7 @@ outputs:
       glob: $(inputs.out_bam)
     secondaryFiles:
       - .bai?
-  log_file:
+  log_file_output:
     type: File?
     outputBinding:
       glob: $(inputs.log_file)

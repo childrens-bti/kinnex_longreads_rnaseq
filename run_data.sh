@@ -87,3 +87,6 @@ cwltool \
 # 	--outdir outputs/kinnex_output_resumed \
 # 	resume_from_cluster.cwl \
 # 	params/resume_from_cluster_params.yml
+
+# deploy to Cavatica
+sbpack cavatica childrens-bti/rokita-longread-rna-harmonization/kinnex-longreads /home/ubuntu/kinnex_longreads/main_workflow.cwl

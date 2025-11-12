@@ -89,6 +89,9 @@ inputs:
   pbmm2_min_gap_comp_id_perc:
     type: float?
     default: 95.0
+  pbmm2_bam_index:
+    type: string?
+    doc: BAM index type for sorted output (NONE, BAI, CSI). If not specified, uses pbmm2 default.
   
   # Collapse options
   collapse_min_aln_coverage:
@@ -112,11 +115,31 @@ inputs:
   collapse_threads:
     type: int?
     default: 0
+  collapse_aligned_pattern:
+    type: string?
+    default: "^mapped\\..*\\.bam$"
+    doc: Pattern to match aligned BAM files for collapse
+  collapse_flnc_pattern:
+    type: string?
+    default: "^flnc\\..*\\.bam$"
+    doc: Pattern to match FLNC BAM files for collapse
   
   # Classify options
   classify_threads:
     type: int?
     default: 0
+  collapse_gff_pattern:
+    type: string?
+    default: "^collapse_isoforms\\..*\\.gff$"
+    doc: Pattern to match collapse GFF files for classification
+  flnc_count_pattern:
+    type: string?
+    default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
+    doc: Pattern to match FLNC count files for classification
+  classify_out_prefix_base:
+    type: string?
+    default: "pigeon"
+    doc: Base prefix for pigeon classify output files
   
   # Filter options
   filter_polya_percent:
@@ -140,6 +163,18 @@ inputs:
   filter_threads:
     type: int?
     default: 0
+  classification_pattern:
+    type: string?
+    default: "^pigeon\\..*_classification\\.txt$"
+    doc: Pattern to match classification files for filtering
+  junctions_pattern:
+    type: string?
+    default: "^pigeon\\..*_junctions\\.txt$"
+    doc: Pattern to match junctions files for filtering
+  isoforms_gff_pattern:
+    type: string?
+    default: "^collapse_isoforms\\..*\\.sorted\\.gff$"
+    doc: Pattern to match sorted isoforms GFF files for filtering
   
   # Report options
   report_sub_sample_increment:
@@ -218,6 +253,7 @@ steps:
       threads: cluster_threads
       log_level: log_level
       singletons: cluster_singletons
+
     out: [transcripts_bams, transcripts_bam_pbis, singletons_outputs, annotated_bams, report_csvs]
 
   # Step 7: Create output directory for transcript BAMs
@@ -238,6 +274,7 @@ steps:
       preset: pbmm2_preset
       threads: pbmm2_threads
       sort: pbmm2_sort
+      bam_index: pbmm2_bam_index
       min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
       log_level: log_level
     out: [mapped_bams, log_files]
@@ -256,7 +293,9 @@ steps:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
       aligned_bam_dir: create_mapped_dir/output_dir
+      aligned_pattern: collapse_aligned_pattern
       flnc_bam_dir: create_flnc_dir/output_dir
+      flnc_pattern: collapse_flnc_pattern
       min_aln_coverage: collapse_min_aln_coverage
       min_aln_identity: collapse_min_aln_identity
       max_fuzzy_junction: collapse_max_fuzzy_junction
@@ -289,9 +328,12 @@ steps:
     run: workflows/pigeon_classify_scatter.cwl
     in:
       collapse_gff_dir: create_collapse_gff_dir/output_dir
+      collapse_gff_pattern: collapse_gff_pattern
       annotation_gtf: annotation_gtf
       reference_fa: reference_fa
       flnc_count_dir: create_flnc_count_dir/output_dir
+      flnc_count_pattern: flnc_count_pattern
+      out_prefix_base: classify_out_prefix_base
       threads: classify_threads
       log_level: log_level
     out: [classification_txts, junctions_txts, report_jsons, summary_txts, prepared_isoforms_gffs]
@@ -326,8 +368,11 @@ steps:
     run: workflows/pigeon_filter_report_scatter.cwl
     in:
       classification_dir: create_classification_dir/output_dir
+      classification_pattern: classification_pattern
       junctions_dir: create_junctions_dir/output_dir
+      junctions_pattern: junctions_pattern
       isoforms_gff_dir: create_isoforms_gff_dir/output_dir
+      isoforms_gff_pattern: isoforms_gff_pattern
       polya_percent: filter_polya_percent
       polya_run_length: filter_polya_run_length
       max_distance: filter_max_distance

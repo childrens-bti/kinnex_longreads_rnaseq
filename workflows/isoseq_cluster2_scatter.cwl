@@ -18,12 +18,6 @@ inputs:
   singletons:
     type: boolean?
     default: false
-  sort_threads:
-    type: int?
-    doc: Number of sorting threads per BAM file. Defaults to -j
-  write_bam_suffix:
-    type: string?
-    doc: If provided, will create annotated BAM with this suffix
 
 steps:
   list_flnc_bams:
@@ -45,8 +39,6 @@ steps:
       log_file:
         valueFrom: $("clustered." + inputs.flnc_input.basename.replace(/^flnc\./,'').replace(/\.bam$/,'') + ".isoseq-cluster2.log")
       singletons: singletons
-      sort_threads: sort_threads
-      write_bam: write_bam_suffix
 
     out: [transcripts_output, transcripts_bam_pbi, singletons_output, annotated_bam, report_csv]
     scatter: flnc_input

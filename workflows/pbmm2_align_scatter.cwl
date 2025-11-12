@@ -49,7 +49,8 @@ steps:
       preset: preset
       threads: threads
       sort: sort
-      bam_index: bam_index
+      bam_index:
+        source: bam_index
       min_gap_comp_id_perc: min_gap_comp_id_perc
       log_level: log_level
       log_file:

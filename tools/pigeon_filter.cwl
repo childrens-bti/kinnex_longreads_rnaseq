@@ -68,12 +68,14 @@ inputs:
 
   mono_exon:
     type: boolean?
+    default: false
     doc: Filter out all mono-exonic transcripts
     inputBinding:
       prefix: --mono-exon
 
   skip_junctions:
     type: boolean?
+    default: false
     doc: Skip junctions.txt filtering
     inputBinding:
       prefix: --skip-junctions

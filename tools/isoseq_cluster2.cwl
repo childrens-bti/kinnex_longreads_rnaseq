@@ -36,6 +36,7 @@ inputs:
       prefix: --log-file
   singletons:
     type: boolean?
+    default: false
     doc: Output FLNCs that could not be clustered
     inputBinding:
       prefix: --singletons

@@ -36,6 +36,7 @@ inputs:
 
   exclude_singletons:
     type: boolean?
+    default: false
     doc: Only count isoforms with > 1 supporting read
     inputBinding:
       prefix: --exclude-singletons

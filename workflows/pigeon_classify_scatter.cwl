@@ -51,14 +51,18 @@ steps:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: collapse_gff_dir
-      pattern: collapse_gff_pattern
+      pattern:
+        source: collapse_gff_pattern
+        default: "^collapse_isoforms\\..*\\.gff$"
     out: [files]
 
   list_flnc_counts:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: flnc_count_dir
-      pattern: flnc_count_pattern
+      pattern:
+        source: flnc_count_pattern
+        default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
     out: [files]
 
   prepare_isoforms:
@@ -79,21 +83,24 @@ steps:
       reference_fa: prepare_references/prepared_reference
       isoforms_gff: prepare_isoforms/prepared_isoforms
       flnc_count: list_flnc_counts/files
+      out_prefix_base: out_prefix_base
       out_prefix:
         valueFrom: |
           ${
+            var prefix_base = inputs.out_prefix_base || "pigeon";
             var basename = inputs.isoforms_gff.basename;
             var sample = basename.replace(/^collapse_isoforms\./, '').replace(/\.sorted\.gff$/, '').replace(/\.gff$/, '');
-            return "pigeon." + sample;
+            return prefix_base + "." + sample;
           }
       threads: threads
       log_level: log_level
       log_file:
         valueFrom: |
           ${
+            var prefix_base = inputs.out_prefix_base || "pigeon";
             var basename = inputs.isoforms_gff.basename;
             var sample = basename.replace(/^collapse_isoforms\./, '').replace(/\.sorted\.gff$/, '').replace(/\.gff$/, '');
-            return "pigeon_classify_" + sample + ".log";
+            return prefix_base + "_classify_" + sample + ".log";
           }
     out: [classification_txt, junctions_txt, report_json, summary_txt]
     scatter: [isoforms_gff, flnc_count]

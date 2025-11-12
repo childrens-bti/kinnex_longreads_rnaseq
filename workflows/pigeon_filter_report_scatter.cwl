@@ -12,12 +12,12 @@ inputs:
   # Inputs from classify scatter workflow
   classification_dir: Directory
   classification_pattern:
-    type: string
+    type: string?
     default: "^pigeon\\..*_classification\\.txt$"
     doc: Pattern to match classification files
   junctions_dir: Directory
   junctions_pattern:
-    type: string
+    type: string?
     default: "^pigeon\\..*_junctions\\.txt$"
     doc: Pattern to match junctions files
   isoforms_gff_dir:
@@ -72,21 +72,27 @@ steps:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: classification_dir
-      pattern: classification_pattern
+      pattern:
+        source: classification_pattern
+        default: "^pigeon\\..*_classification\\.txt$"
     out: [files]
 
   list_junctions_files:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: junctions_dir
-      pattern: junctions_pattern
+      pattern:
+        source: junctions_pattern
+        default: "^pigeon\\..*_junctions\\.txt$"
     out: [files]
 
   list_isoforms_gffs:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: isoforms_gff_dir
-      pattern: isoforms_gff_pattern
+      pattern:
+        source: isoforms_gff_pattern
+        default: "^collapse_isoforms\\..*\\.sorted\\.gff$"
     out: [files]
 
   filter_each:

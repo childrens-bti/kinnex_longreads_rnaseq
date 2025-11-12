@@ -52,14 +52,18 @@ steps:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: aligned_bam_dir
-      pattern: aligned_pattern
+      pattern:
+        source: aligned_pattern
+        default: "^mapped\\..*\\.bam$"
     out: [files]
 
   list_flnc_bams:
     run: ../tools/list_files_by_pattern.cwl
     in:
       dir: flnc_bam_dir
-      pattern: flnc_pattern
+      pattern:
+        source: flnc_pattern
+        default: "^flnc\\..*\\.bam$"
     out: [files]
 
   collapse_each:

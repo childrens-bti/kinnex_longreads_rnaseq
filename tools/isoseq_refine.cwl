@@ -48,12 +48,8 @@ outputs:
     type: File
     outputBinding:
       glob: flnc.$(inputs.biosample_name).bam
-
-  out_flnc_bam_pbi:
-    type: File?
-    doc: PacBio BAM index (.pbi) for out_flnc_bam
-    outputBinding:
-      glob: flnc.$(inputs.biosample_name).bam.pbi
+    secondaryFiles:
+      - .pbi
 
   filter_summary_json:
     type: File?

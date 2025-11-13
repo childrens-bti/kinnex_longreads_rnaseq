@@ -58,11 +58,8 @@ outputs:
     doc: Output transcripts BAM
     outputBinding:
       glob: $(inputs.transcripts_bam)
-  transcripts_bam_pbi:
-    type: File?
-    doc: PacBio BAM index (.pbi) for transcripts_output
-    outputBinding:
-      glob: $(inputs.transcripts_bam).pbi
+    secondaryFiles:
+      - .pbi
   singletons_output:
     type: File?
     doc: Optional singletons output if --singletons is used

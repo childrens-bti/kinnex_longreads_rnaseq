@@ -32,7 +32,7 @@ steps:
         valueFrom: $("clustered." + inputs.flnc_input.basename.replace(/^flnc\./,'').replace(/\.bam$/,'') + ".isoseq-cluster2.log")
       singletons: singletons
 
-    out: [transcripts_output, transcripts_bam_pbi, singletons_output, annotated_bam, report_csv]
+    out: [transcripts_output, singletons_output, annotated_bam, report_csv]
     scatter: flnc_input
     scatterMethod: dotproduct
 
@@ -40,9 +40,6 @@ outputs:
   transcripts_bams:
     type: File[]
     outputSource: cluster_each/transcripts_output
-  transcripts_bam_pbis:
-    type: File[]?
-    outputSource: cluster_each/transcripts_bam_pbi
   singletons_outputs:
     type: File[]?
     outputSource: cluster_each/singletons_output

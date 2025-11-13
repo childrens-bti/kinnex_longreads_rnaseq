@@ -178,7 +178,7 @@ steps:
       threads: skera_threads
       use_dataset_xml: skera_use_dataset_xml
       log_level: log_level
-    out: [segmented_bam, segmented_bam_pbi, non_passing_bam, non_passing_bam_pbi, segmented_dataset, summary_csv, ligations_csv, read_lengths_csv, adapters_csv_gz]
+    out: [segmented_bam, non_passing_bam, segmented_dataset, summary_csv, ligations_csv, read_lengths_csv, adapters_csv_gz]
 
   # Step 2: Demultiplex by barcodes
   lima:
@@ -200,7 +200,7 @@ steps:
       threads: refine_threads
       log_level: log_level
       require_polya: refine_require_polya
-    out: [out_flnc_bams, out_flnc_bam_pbis, filter_summaries, reports]
+    out: [out_flnc_bams, filter_summaries, reports]
 
   # Step 6: Cluster FLNC reads into transcripts (scatter across samples)
   cluster:
@@ -211,7 +211,7 @@ steps:
       log_level: log_level
       singletons: cluster_singletons
 
-    out: [transcripts_bams, transcripts_bam_pbis, singletons_outputs, annotated_bams, report_csvs]
+    out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
   # Step 8: Align transcripts to reference (scatter across samples)
   pbmm2:
@@ -284,15 +284,9 @@ outputs:
   segmented_summary:
     type: File?
     outputSource: skera/summary_csv
-  segmented_bam_pbi:
-    type: File?
-    outputSource: skera/segmented_bam_pbi
   non_passing_bam:
     type: File
     outputSource: skera/non_passing_bam
-  non_passing_bam_pbi:
-    type: File?
-    outputSource: skera/non_passing_bam_pbi
   segmented_dataset:
     type: File?
     outputSource: skera/segmented_dataset
@@ -333,9 +327,6 @@ outputs:
   flnc_bams:
     type: File[]
     outputSource: refine/out_flnc_bams
-  flnc_bam_pbis:
-    type: File[]?
-    outputSource: refine/out_flnc_bam_pbis
   refine_filter_summaries:
     type: File[]?
     outputSource: refine/filter_summaries
@@ -347,9 +338,6 @@ outputs:
   transcripts_bams:
     type: File[]
     outputSource: cluster/transcripts_bams
-  transcripts_bam_pbis:
-    type: File[]?
-    outputSource: cluster/transcripts_bam_pbis
   cluster_singletons_outputs:
     type: File[]?
     outputSource: cluster/singletons_outputs

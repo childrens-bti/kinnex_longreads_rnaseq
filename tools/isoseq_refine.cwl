@@ -6,6 +6,9 @@ requirements:
   DockerRequirement:
     dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: $(inputs.threads > 0 ? inputs.threads : 16)
 
 baseCommand: [isoseq, refine]
 
@@ -49,7 +52,8 @@ outputs:
     outputBinding:
       glob: flnc.$(inputs.biosample_name).bam
     secondaryFiles:
-      - .pbi
+      - pattern: .pbi
+        required: false
 
   filter_summary_json:
     type: File?

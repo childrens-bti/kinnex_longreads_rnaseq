@@ -5,6 +5,11 @@ requirements:
   DockerRequirement:
     dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   ShellCommandRequirement: {}
+  InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: $(inputs.threads > 0 ? inputs.threads : 32)
+
 baseCommand: [isoseq, cluster2]
 
 inputs:
@@ -59,7 +64,8 @@ outputs:
     outputBinding:
       glob: $(inputs.transcripts_bam)
     secondaryFiles:
-      - .pbi
+      - pattern: .pbi
+        required: false
   singletons_output:
     type: File?
     doc: Optional singletons output if --singletons is used

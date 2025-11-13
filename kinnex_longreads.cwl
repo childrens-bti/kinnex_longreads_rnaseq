@@ -191,7 +191,7 @@ steps:
       log_level: log_level
     out: [out_dataset, demux_bams, counts, report, summary, lima_log]
 
-  # Step 4: Refine FLNC reads (scatter across barcodes)
+  # Step 3: Refine FLNC reads (scatter across barcodes)
   refine:
     run: workflows/isoseq_refine_scatter.cwl
     in:
@@ -202,7 +202,7 @@ steps:
       require_polya: refine_require_polya
     out: [out_flnc_bams, filter_summaries, reports]
 
-  # Step 6: Cluster FLNC reads into transcripts (scatter across samples)
+  # Step 4: Cluster FLNC reads into transcripts (scatter across samples)
   cluster:
     run: workflows/isoseq_cluster2_scatter.cwl
     in:
@@ -213,7 +213,7 @@ steps:
 
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
-  # Step 8: Align transcripts to reference (scatter across samples)
+  # Step 5: Align transcripts to reference (scatter across samples)
   pbmm2:
     run: workflows/pbmm2_align_scatter.cwl
     in:
@@ -227,7 +227,7 @@ steps:
       log_level: log_level
     out: [mapped_bams, log_files]
 
-  # Step 10: Collapse aligned reads into isoforms (scatter across samples)
+  # Step 6: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
@@ -243,7 +243,7 @@ steps:
       log_level: log_level
     out: [collapse_gffs, collapse_fastas, group_txts, flnc_count_txts, read_stat_txts, collapse_report_jsons, abundance_txts]
 
-  # Step 11: Classify isoforms (scatter across samples)
+  # Step 7: Classify isoforms (scatter across samples)
   classify:
     run: workflows/pigeon_classify_scatter.cwl
     in:
@@ -256,7 +256,7 @@ steps:
       log_level: log_level
     out: [classification_txts, junctions_txts, report_jsons, summary_txts, prepared_isoforms_gffs]
 
-  # Step 12: Filter and report (scatter across samples)
+  # Step 8: Filter and report (scatter across samples)
   filter_report:
     run: workflows/pigeon_filter_report_scatter.cwl
     in:
@@ -432,3 +432,9 @@ outputs:
     type: File[]
     outputSource: filter_report/saturation_txts
     doc: Transcript discovery saturation analysis
+
+$namespaces:
+  sbg: https://sevenbridges.com
+hints:
+  - class: sbg:maxNumberOfParallelInstances
+    value: 2

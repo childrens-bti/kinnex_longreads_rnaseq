@@ -5,6 +5,9 @@ requirements:
   DockerRequirement:
     dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: 4
   InitialWorkDirRequirement:
     listing: $(inputs.input_files)
 

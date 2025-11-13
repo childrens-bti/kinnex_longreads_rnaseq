@@ -5,6 +5,11 @@ requirements:
   DockerRequirement:
     dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   ShellCommandRequirement: {}
+  InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: $(inputs.threads > 0 ? inputs.threads : 32)
+
 baseCommand: [pbmm2, align]
 
 inputs:

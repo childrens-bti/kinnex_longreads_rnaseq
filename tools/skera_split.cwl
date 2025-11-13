@@ -5,6 +5,10 @@ requirements:
   DockerRequirement:
     dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   ShellCommandRequirement: {}
+  InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: $(inputs.threads > 0 ? inputs.threads : 16)
   InitialWorkDirRequirement:
     listing:
       - entryname: run_skera.sh
@@ -102,13 +106,15 @@ outputs:
     outputBinding:
       glob: $(inputs.out_prefix).bam
     secondaryFiles:
-      - .pbi
+      - pattern: .pbi
+        required: false
   non_passing_bam:
     type: File
     outputBinding:
       glob: $(inputs.out_prefix).non_passing.bam
     secondaryFiles:
-      - .pbi
+      - pattern: .pbi
+        required: false
   segmented_dataset:
     type: File?
     doc: ConsensusReadSet XML (only created when use_dataset_xml=true and may not be output by skera)

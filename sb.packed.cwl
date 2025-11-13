@@ -544,7 +544,6 @@
                     "out": [
                         "#main/lima/out_dataset",
                         "#main/lima/demux_bams",
-                        "#main/lima/demux_bam_pbis",
                         "#main/lima/counts",
                         "#main/lima/report",
                         "#main/lima/summary",
@@ -788,17 +787,6 @@
                     ],
                     "outputSource": "#main/collapse/collapse_report_jsons",
                     "id": "#main/collapse_reports"
-                },
-                {
-                    "type": [
-                        "null",
-                        {
-                            "type": "array",
-                            "items": "File"
-                        }
-                    ],
-                    "outputSource": "#main/lima/demux_bam_pbis",
-                    "id": "#main/demux_bam_pbis"
                 },
                 {
                     "type": {
@@ -1663,22 +1651,6 @@
                     "id": "#lima_isoseq.cwl/counts"
                 },
                 {
-                    "type": [
-                        "null",
-                        {
-                            "type": "array",
-                            "items": "File"
-                        }
-                    ],
-                    "doc": "PacBio BAM index files corresponding to demultiplexed BAMs (patterns like <out_prefix>*.bam.pbi)",
-                    "outputBinding": {
-                        "glob": [
-                            "$(inputs.out_prefix)*.bam.pbi"
-                        ]
-                    },
-                    "id": "#lima_isoseq.cwl/demux_bam_pbis"
-                },
-                {
                     "type": {
                         "type": "array",
                         "items": "File"
@@ -1689,6 +1661,12 @@
                             "$(inputs.out_prefix)*.bam"
                         ]
                     },
+                    "secondaryFiles": [
+                        {
+                            "pattern": ".pbi",
+                            "required": null
+                        }
+                    ],
                     "id": "#lima_isoseq.cwl/demux_bams"
                 },
                 {
@@ -3285,7 +3263,6 @@
                     "out": [
                         "#lima_isoseq_run.cwl/lima_isoseq/out_dataset",
                         "#lima_isoseq_run.cwl/lima_isoseq/demux_bams",
-                        "#lima_isoseq_run.cwl/lima_isoseq/demux_bam_pbis",
                         "#lima_isoseq_run.cwl/lima_isoseq/counts",
                         "#lima_isoseq_run.cwl/lima_isoseq/report",
                         "#lima_isoseq_run.cwl/lima_isoseq/summary",
@@ -3302,17 +3279,6 @@
                     ],
                     "outputSource": "#lima_isoseq_run.cwl/lima_isoseq/counts",
                     "id": "#lima_isoseq_run.cwl/counts"
-                },
-                {
-                    "type": [
-                        "null",
-                        {
-                            "type": "array",
-                            "items": "File"
-                        }
-                    ],
-                    "outputSource": "#lima_isoseq_run.cwl/lima_isoseq/demux_bam_pbis",
-                    "id": "#lima_isoseq_run.cwl/demux_bam_pbis"
                 },
                 {
                     "type": {

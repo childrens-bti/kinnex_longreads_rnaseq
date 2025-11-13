@@ -2,6 +2,22 @@
 
 This repository contains a comprehensive CWL-based workflow for processing Kinnex/MAS-Iso-Seq long-read sequencing data. The pipeline implements the complete PacBio Iso-Seq workflow from HiFi reads to final isoform characterization using open-source tools.
 
+## ✨ Recent Updates (November 2025)
+
+**Major architectural improvements for Cavatica compatibility:**
+
+- ✅ **Eliminated Directory.listing dependencies**: Converted all scatter workflows to pass File arrays directly instead of using Directory objects with pattern matching, resolving Cavatica "Failed to transform inputs" errors
+- ✅ **Streamlined secondary file handling**: Consolidated `.pbi` index files as secondary files on BAM outputs, removing redundant output parameters
+- ✅ **Added resource requirements**: All tools now specify CPU (16-32 cores) and RAM (64GB) requirements for proper Cavatica instance provisioning
+- ✅ **Removed unused tools**: Eliminated `list_files_by_pattern.cwl` and `create_output_directory.cwl` as they're no longer needed
+- ✅ **Improved type safety**: Fixed optional vs required type mismatches between workflow steps to eliminate CWL validation warnings
+
+**Key architectural changes:**
+- Input type change: `hifi_dir` (Directory) → `hifi_bam` (File) for direct file specification
+- Removed 7 pattern input parameters (no longer needed for file filtering)
+- Removed 5 intermediate directory creation steps from main workflow
+- All 6 scatter workflows now accept File arrays directly
+
 ## 🔬 Pipeline Overview
 
 The Kinnex/MAS-Iso-Seq pipeline processes long-read sequencing data through several key steps to identify and quantify transcript isoforms. All tools are available through PacBio's bioconda channel: [pbbioconda](https://github.com/PacificBiosciences/pbbioconda).
@@ -148,7 +164,6 @@ kinnex_longreads/
 │   ├── isoseq_collapse.cwl  
 │   ├── isoseq_refine.cwl
 │   ├── lima_isoseq.cwl
-│   ├── list_files_by_pattern.cwl
 │   ├── pbmm2_align.cwl
 │   ├── pigeon_classify.cwl
 │   ├── pigeon_filter.cwl
@@ -165,24 +180,16 @@ kinnex_longreads/
 │   ├── pigeon_filter_report_scatter.cwl
 │   └── skera.cwl
 ├── scripts/                 # Analysis scripts   
-├── data/                    # Input data
+├── data/                    # Input data (S3 mounts)
 ├── manifests/               # Manifest files 
 ├── params/                  # Workflow parameter files
 │   ├── *_test.yml          # Test parameter files for each workflow
 │   └── kinnex_params.yml   # Main pipeline parameters
 ├── outputs/                 # Pipeline outputs
-│   ├── skera_test/
-│   ├── lima_isoseq_test/
-│   ├── isoseq_refine_test/
-│   ├── isoseq_cluster2_test/
-│   ├── pbmm2_align_scatter_test/
-│   ├── isoseq_collapse_scatter_test/
-│   ├── pigeon_classify_scatter_test/
-│   └── pigeon_filter_report_scatter_test/
 ├── envs/                    # Conda environments
 │   └── cwl_env.yml
 ├── run_data.sh              # Test execution scripts
-├── main_workflow.cwl        # Main workflow
+├── kinnex_longreads.cwl     # Main workflow entry point
 ├── README.md
 └── LICENSE
 ```
@@ -276,10 +283,10 @@ nano params/main_params.yml
 
 **Required inputs to configure:**
 ```yaml
-# Input data
-hifi_dir:
-  class: Directory
-  path: data/your-bucket-name/path/to/hifi_bams/
+# Input data - Direct file specification (not directory)
+hifi_bam:
+  class: File
+  path: data/your-bucket-name/path/to/m84091_250103_164424_s3.bc1001.bam
 
 # Adapters for segmentation (Skera)
 adapters_fa:
@@ -305,12 +312,21 @@ annotation_gtf:
 **Optional parameters to tune:**
 ```yaml
 # Thread settings (0 = auto-detect)
+# Tools will use these defaults if not specified:
+# - Cluster, Lima, PBMM2: 32 cores
+# - Other tools: 16 cores
 skera_threads: 0
 lima_threads: 0
 refine_threads: 0
 cluster_threads: 0
 pbmm2_threads: 0
 collapse_threads: 0
+classify_threads: 0
+filter_threads: 0
+
+# Resource requirements (automatically set)
+# - All tools: 64GB RAM minimum
+# - CPU cores scale with thread settings
 
 # Quality filtering
 refine_require_polya: true
@@ -329,8 +345,8 @@ cwltool \
   --tmpdir-prefix ./.cwl-tmp/ \
   --tmp-outdir-prefix ./.cwl-out/ \
   --outdir outputs/kinnex_output \
-  main_workflow.cwl \
-  params/main_params.yml
+  kinnex_longreads.cwl \
+  params/kinnex_params.yml
 ```
 
 **Command options explained:**
@@ -382,11 +398,13 @@ The pipeline executes 14 major steps sequentially:
 
 ### 📋 Input Data Requirements
 
-- **HiFi BAM files**: High-fidelity consensus reads (`.bam` + `.bam.pbi` index)
-- **Adapters FASTA** (Skera): Adapter sequences used for concatermization (e.g., `mas8_primers.fasta`)
+- **HiFi BAM file**: Single high-fidelity consensus read file (`.bam` with optional `.pbi` index)
+- **Adapters FASTA** (Skera): Adapter sequences used for concatenation (e.g., `mas8_primers.fasta`)
 - **Barcodes FASTA** (Lima): Barcoded primers with `_5p` and `_3p` suffixes (e.g., `IsoSeq_v2_primers_12.fasta`)
 - **Reference genome**: Uncompressed FASTA
-- **Annotation GTF**: Standard GTF format for gene annotations (also need to be uncompressed)
+- **Annotation GTF**: Standard GTF format for gene annotations (uncompressed)
+
+**Note:** All BAM files automatically include their `.pbi` index files as secondary files - no need to specify them separately.
 
 ### 📤 Pipeline Outputs
 
@@ -585,11 +603,32 @@ For full production datasets:
 
 ### Cavatica Platform Integration
 
-This pipeline is designed to be portable to the Cavatica platform:
-- CWL workflows are fully compatible with Cavatica's execution environment
-- Docker containers can be registered in Cavatica's container registry
-- Input/output handling works seamlessly with Cavatica's file system
-- Coming soon: Pre-configured Cavatica app with optimized settings
+**Status: Ready for Deployment** ✅
+
+This pipeline has been optimized for Cavatica platform compatibility:
+- ✅ CWL v1.2 workflows fully compatible with Cavatica execution environment
+- ✅ Docker containers ready for Cavatica container registry
+- ✅ Resource requirements specified for proper instance provisioning (16-32 cores, 64GB RAM)
+- ✅ File array handling optimized for Cavatica's input transformation
+- ✅ Secondary files properly configured for BAM/index file staging
+- ✅ Eliminated Directory.listing dependencies that caused Cavatica errors
+
+**Deployment:**
+```bash
+# Validate workflow
+cwltool --validate kinnex_longreads.cwl
+
+# Pack for deployment
+cwltool --pack kinnex_longreads.cwl > kinnex_longreads.packed.cwl
+
+# Deploy to Cavatica (requires sbpack)
+sbpack cavatica your-division/your-project/workflow-name kinnex_longreads.cwl
+```
+
+**Coming soon:**
+- Pre-configured Cavatica app with optimized default settings
+- Batch processing support for multiple samples
+- Integration with Cavatica's cost estimation tools
 
 ## 📚 Additional Resources
 

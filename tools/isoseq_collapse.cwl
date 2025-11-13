@@ -13,12 +13,13 @@ inputs:
     inputBinding:
       position: 1
   flnc_bam:
-    type: File
+    type: File?
     doc: FLNC BAM, optional input
     inputBinding:
       position: 2
     secondaryFiles:
-      - .pbi
+      - required: false
+        pattern: .pbi
   out_gff:
     type: string
     default: collapse_isoforms.gff

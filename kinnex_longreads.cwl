@@ -438,3 +438,6 @@ $namespaces:
 hints:
   - class: sbg:maxNumberOfParallelInstances
     value: 2
+"sbg:links":
+- id: 'https://github.com/childrens-bti/kinnex_longreads/tree/feat/workflow_sketch' # will update with stable release
+  label: github-release

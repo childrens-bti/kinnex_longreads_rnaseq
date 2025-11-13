@@ -8,7 +8,11 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  flnc_bams: File[]
+  flnc_bams:
+    type: File[]
+    secondaryFiles:
+      - pattern: .pbi
+        required: false
   threads:
     type: int?
     default: 0

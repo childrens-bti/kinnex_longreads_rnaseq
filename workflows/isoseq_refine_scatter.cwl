@@ -8,7 +8,11 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  demux_bams: File[]
+  demux_bams:
+    type: File[]
+    secondaryFiles:
+      - pattern: .pbi
+        required: false
   barcodes: File
   threads:
     type: int?

@@ -7,7 +7,7 @@ requirements:
   InlineJavascriptRequirement: {}
   ResourceRequirement:
     ramMin: 64000
-    coresMin: 4
+    coresMin: "$(inputs.threads > 0 ? inputs.threads : 32)"
   InitialWorkDirRequirement:
     listing: $(inputs.input_files)
 

@@ -7,7 +7,7 @@ requirements:
   InlineJavascriptRequirement: {}
   ResourceRequirement:
     ramMin: 64000
-    coresMin: $(inputs.threads > 0 ? inputs.threads : 16)
+    coresMin: "$(inputs.threads > 0 ? inputs.threads : 16)"
 
 baseCommand: [pigeon, classify]
 

@@ -4,6 +4,9 @@ class: Workflow
 requirements:
   InlineJavascriptRequirement: {}
   StepInputExpressionRequirement: {}
+  ResourceRequirement:
+    ramMin: 64000
+    coresMin: "$(inputs.threads > 0 ? inputs.threads : 16)"
 
 inputs:
   hifi_bam:

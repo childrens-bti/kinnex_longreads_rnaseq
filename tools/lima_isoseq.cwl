@@ -71,12 +71,8 @@ outputs:
     outputBinding:
       glob:
         - $(inputs.out_prefix)*.bam
-  demux_bam_pbis:
-    type: File[]?
-    doc: PacBio BAM index files corresponding to demultiplexed BAMs (patterns like <out_prefix>*.bam.pbi)
-    outputBinding:
-      glob:
-        - $(inputs.out_prefix)*.bam.pbi
+    secondaryFiles:
+      - .pbi
   counts:
     type: File?
     outputBinding:

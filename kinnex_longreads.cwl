@@ -189,7 +189,7 @@ steps:
       out_prefix: lima_out_prefix
       threads: lima_threads
       log_level: log_level
-    out: [out_dataset, demux_bams, demux_bam_pbis, counts, report, summary, lima_log]
+    out: [out_dataset, demux_bams, counts, report, summary, lima_log]
 
   # Step 4: Refine FLNC reads (scatter across barcodes)
   refine:
@@ -307,9 +307,6 @@ outputs:
   demux_bams:
     type: File[]
     outputSource: lima/demux_bams
-  demux_bam_pbis:
-    type: File[]?
-    outputSource: lima/demux_bam_pbis
   lima_counts:
     type: File?
     outputSource: lima/counts

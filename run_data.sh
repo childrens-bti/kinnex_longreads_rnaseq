@@ -82,5 +82,5 @@ cwltool \
 
 # deploy to Cavatica
 cwltool --pack kinnex_longreads.cwl > sb.packed.cwl
-cwltool --validate packed.cwl
+cwltool --validate sb.packed.cwl
 sbpack cavatica childrens-bti/rokita-longread-rna-harmonization/kinnex-longreads /home/ubuntu/kinnex_longreads/kinnex_longreads.cwl

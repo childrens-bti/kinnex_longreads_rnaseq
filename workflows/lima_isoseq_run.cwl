@@ -40,7 +40,7 @@ steps:
         default: true
       overwrite_biosample_names:
         default: true
-    out: [out_dataset, demux_bams, demux_bam_pbis, counts, report, summary, lima_log]
+    out: [out_dataset, demux_bams, counts, report, summary, lima_log]
 
 outputs:
   out_dataset:
@@ -49,9 +49,6 @@ outputs:
   demux_bams:
     type: File[]
     outputSource: lima_isoseq/demux_bams
-  demux_bam_pbis:
-    type: File[]?
-    outputSource: lima_isoseq/demux_bam_pbis
   counts:
     type: File?
     outputSource: lima_isoseq/counts

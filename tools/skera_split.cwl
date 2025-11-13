@@ -3,7 +3,7 @@ class: CommandLineTool
 label: Kinnex segmentation (skera split)
 requirements:
   DockerRequirement:
-    dockerImageId: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
   ShellCommandRequirement: {}
   InitialWorkDirRequirement:
     listing:

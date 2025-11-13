@@ -4,11 +4,14 @@ class: Workflow
 requirements:
   InlineJavascriptRequirement: {}
   StepInputExpressionRequirement: {}
-  LoadListingRequirement:
-    loadListing: shallow_listing
 
 inputs:
-  hifi_dir: Directory
+  hifi_bam:
+    type: File
+    doc: HiFi BAM file (e.g., *bc*.bam)
+    secondaryFiles:
+      - required: false
+        pattern: .pbi
   adapters_fa:
     type: File
     doc: Adapters FASTA (e.g., params/mas8_primers.fasta)
@@ -31,29 +34,7 @@ steps:
   skera_split:
     run: ../tools/skera_split.cwl
     in:
-      # find the hifi BAM file from hifi_dir
-      in_bam:
-        source: hifi_dir
-        valueFrom: >
-          ${
-            // ES5.1 only
-            var entries = (self.listing || []);
-            // keep only files that look like *bc*.bam but not *.unassigned.bam
-            var list = entries.filter(function (e) {
-              return e.class === 'File' &&
-                     /bc.*\.bam$/i.test(e.basename) &&
-                     !/\.unassigned\.bam$/i.test(e.basename);
-            });
-            if (!list.length) {
-              throw new Error('No matching BAMs in ' + self.path);
-            }
-            // deterministic: sort by basename
-            list.sort(function (a, b) {
-              return a.basename.localeCompare(b.basename);
-            });
-            // return the File object itself (no copy here)
-            return list[0];
-          }
+      in_bam: hifi_bam
       adapters_fa: adapters_fa
       out_prefix: out_prefix
       threads: threads

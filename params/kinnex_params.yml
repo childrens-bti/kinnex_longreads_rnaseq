@@ -6,11 +6,11 @@
 # ============================================================================
 
 # Primary input data
-hifi_dir:
-  class: Directory
-  path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/
-  # original full dataset mounted from S3:
-  # path: /home/ubuntu/kinnex_longreads/data/bti-private-us-east-1-prd-rokita-lab/source/SR009023_Kinnex/SMRTcell1/hifi_reads/
+hifi_bam:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/m84081_250911_195056_s1.0_1pct.hifi_reads.bcM0001.bam
+  # original full dataset example:
+  # path: /home/ubuntu/kinnex_longreads/data/bti-private-us-east-1-prd-rokita-lab/source/SR009023_Kinnex/SMRTcell1/hifi_reads/m84091_250103_164424_s3.bc1001.bam
 
 # Aadapters FASTA file
 adapters_fa:

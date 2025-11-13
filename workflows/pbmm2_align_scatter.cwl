@@ -10,7 +10,7 @@ requirements:
 
 inputs:
   reference: File
-  bam_dir: Directory
+  transcript_bams: File[]
   preset:
     type: string?
     default: ISOSEQ
@@ -31,19 +31,11 @@ inputs:
     default: INFO
 
 steps:
-  list_bams:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: bam_dir
-      pattern:
-        valueFrom: ".*\\.transcripts\\.bam$" # JavaScript regex pattern to match transcripts BAM files
-    out: [files]
-
   align_each:
     run: ../tools/pbmm2_align.cwl
     in:
       reference: reference
-      in_bam: list_bams/files
+      in_bam: transcript_bams
       out_bam:
         valueFrom: $("mapped." + inputs.in_bam.basename.replace(/\.bam$/,'') + ".bam")
       preset: preset

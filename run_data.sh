@@ -76,19 +76,11 @@ cwltool \
 	--tmpdir-prefix ./.cwl-tmp/ \
 	--tmp-outdir-prefix ./.cwl-out/ \
 	--outdir outputs/kinnex_output_test1 \
-	main_workflow.cwl \
+	kinnex_longreads.cwl \
 	params/kinnex_params.yml
 
-# run resume from cluster workflow
-# cwltool \
-# 	--leave-tmpdir \
-# 	--tmpdir-prefix ./.cwl-tmp/ \
-# 	--tmp-outdir-prefix ./.cwl-out/ \
-# 	--outdir outputs/kinnex_output_resumed \
-# 	resume_from_cluster.cwl \
-# 	params/resume_from_cluster_params.yml
 
 # deploy to Cavatica
-cwltool --pack main_workflow.cwl > packed.cwl
+cwltool --pack kinnex_longreads.cwl > sb.packed.cwl
 cwltool --validate packed.cwl
-sbpack cavatica childrens-bti/rokita-longread-rna-harmonization/kinnex-longreads /home/ubuntu/kinnex_longreads/main_workflow.cwl
+sbpack cavatica childrens-bti/rokita-longread-rna-harmonization/kinnex-longreads /home/ubuntu/kinnex_longreads/kinnex_longreads.cwl

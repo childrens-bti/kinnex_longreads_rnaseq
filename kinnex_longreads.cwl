@@ -118,27 +118,11 @@ inputs:
   collapse_threads:
     type: int?
     default: 0
-  collapse_aligned_pattern:
-    type: string?
-    default: "^mapped\\..*\\.bam$"
-    doc: Pattern to match aligned BAM files for collapse
-  collapse_flnc_pattern:
-    type: string?
-    default: "^flnc\\..*\\.bam$"
-    doc: Pattern to match FLNC BAM files for collapse
   
   # Classify options
   classify_threads:
     type: int?
     default: 0
-  collapse_gff_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.gff$"
-    doc: Pattern to match collapse GFF files for classification
-  flnc_count_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
-    doc: Pattern to match FLNC count files for classification
   classify_out_prefix_base:
     type: string?
     default: "pigeon"
@@ -166,18 +150,6 @@ inputs:
   filter_threads:
     type: int?
     default: 0
-  classification_pattern:
-    type: string?
-    default: "^pigeon\\..*_classification\\.txt$"
-    doc: Pattern to match classification files for filtering
-  junctions_pattern:
-    type: string?
-    default: "^pigeon\\..*_junctions\\.txt$"
-    doc: Pattern to match junctions files for filtering
-  isoforms_gff_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.sorted\\.gff$"
-    doc: Pattern to match sorted isoforms GFF files for filtering
   
   # Report options
   report_sub_sample_increment:
@@ -219,61 +191,34 @@ steps:
       log_level: log_level
     out: [out_dataset, demux_bams, demux_bam_pbis, counts, report, summary, lima_log]
 
-  # Step 3: Create output directory for lima demux BAMs (pass as Directory)
-  create_demux_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: lima/demux_bams
-      dir_name:
-        default: demux_bams_dir
-    out: [output_dir]
-
   # Step 4: Refine FLNC reads (scatter across barcodes)
   refine:
     run: workflows/isoseq_refine_scatter.cwl
     in:
-      demux_dir: create_demux_dir/output_dir
+      demux_bams: lima/demux_bams
       barcodes: lima_barcodes
       threads: refine_threads
       log_level: log_level
       require_polya: refine_require_polya
     out: [out_flnc_bams, out_flnc_bam_pbis, filter_summaries, reports]
 
-  # Step 5: Create output directory for FLNC BAMs
-  create_flnc_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: refine/out_flnc_bams
-      dir_name:
-        default: flnc_bams_dir
-    out: [output_dir]
-
   # Step 6: Cluster FLNC reads into transcripts (scatter across samples)
   cluster:
     run: workflows/isoseq_cluster2_scatter.cwl
     in:
-      flnc_dir: create_flnc_dir/output_dir
+      flnc_bams: refine/out_flnc_bams
       threads: cluster_threads
       log_level: log_level
       singletons: cluster_singletons
 
     out: [transcripts_bams, transcripts_bam_pbis, singletons_outputs, annotated_bams, report_csvs]
 
-  # Step 7: Create output directory for transcript BAMs
-  create_transcripts_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: cluster/transcripts_bams
-      dir_name:
-        default: transcripts_bams_dir
-    out: [output_dir]
-
   # Step 8: Align transcripts to reference (scatter across samples)
   pbmm2:
     run: workflows/pbmm2_align_scatter.cwl
     in:
       reference: reference_fa
-      bam_dir: create_transcripts_dir/output_dir
+      transcript_bams: cluster/transcripts_bams
       preset: pbmm2_preset
       threads: pbmm2_threads
       sort: pbmm2_sort
@@ -282,23 +227,12 @@ steps:
       log_level: log_level
     out: [mapped_bams, log_files]
 
-  # Step 9: Create output directories for mapped BAMs
-  create_mapped_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: pbmm2/mapped_bams
-      dir_name:
-        default: mapped_bams_dir
-    out: [output_dir]
-
   # Step 10: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
-      aligned_bam_dir: create_mapped_dir/output_dir
-      aligned_pattern: collapse_aligned_pattern
-      flnc_bam_dir: create_flnc_dir/output_dir
-      flnc_pattern: collapse_flnc_pattern
+      aligned_bams: pbmm2/mapped_bams
+      flnc_bams: refine/out_flnc_bams
       min_aln_coverage: collapse_min_aln_coverage
       min_aln_identity: collapse_min_aln_identity
       max_fuzzy_junction: collapse_max_fuzzy_junction
@@ -309,73 +243,26 @@ steps:
       log_level: log_level
     out: [collapse_gffs, collapse_fastas, group_txts, flnc_count_txts, read_stat_txts, collapse_report_jsons, abundance_txts]
 
-  # Step 11: Create output directories for collapse outputs
-  create_collapse_gff_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: collapse/collapse_gffs
-      dir_name:
-        default: collapse_gffs_dir
-    out: [output_dir]
-
-  create_flnc_count_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: collapse/flnc_count_txts
-      dir_name:
-        default: flnc_count_dir
-    out: [output_dir]
-
-  # Step 12: Classify isoforms (scatter across samples)
+  # Step 11: Classify isoforms (scatter across samples)
   classify:
     run: workflows/pigeon_classify_scatter.cwl
     in:
-      collapse_gff_dir: create_collapse_gff_dir/output_dir
-      collapse_gff_pattern: collapse_gff_pattern
+      collapse_gffs: collapse/collapse_gffs
       annotation_gtf: annotation_gtf
       reference_fa: reference_fa
-      flnc_count_dir: create_flnc_count_dir/output_dir
-      flnc_count_pattern: flnc_count_pattern
+      flnc_counts: collapse/flnc_count_txts
       out_prefix_base: classify_out_prefix_base
       threads: classify_threads
       log_level: log_level
     out: [classification_txts, junctions_txts, report_jsons, summary_txts, prepared_isoforms_gffs]
 
-  # Step 13: Create output directories for classify outputs
-  create_classification_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: classify/classification_txts
-      dir_name:
-        default: classification_dir
-    out: [output_dir]
-
-  create_junctions_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: classify/junctions_txts
-      dir_name:
-        default: junctions_dir
-    out: [output_dir]
-
-  create_isoforms_gff_dir:
-    run: tools/create_output_directory.cwl
-    in:
-      files: classify/prepared_isoforms_gffs
-      dir_name:
-        default: isoforms_gffs_dir
-    out: [output_dir]
-
-  # Step 14: Filter and report (scatter across samples)
+  # Step 12: Filter and report (scatter across samples)
   filter_report:
     run: workflows/pigeon_filter_report_scatter.cwl
     in:
-      classification_dir: create_classification_dir/output_dir
-      classification_pattern: classification_pattern
-      junctions_dir: create_junctions_dir/output_dir
-      junctions_pattern: junctions_pattern
-      isoforms_gff_dir: create_isoforms_gff_dir/output_dir
-      isoforms_gff_pattern: isoforms_gff_pattern
+      classification_txts: classify/classification_txts
+      junctions_txts: classify/junctions_txts
+      isoforms_gffs: classify/prepared_isoforms_gffs
       polya_percent: filter_polya_percent
       polya_run_length: filter_polya_run_length
       max_distance: filter_max_distance
@@ -424,7 +311,7 @@ outputs:
     type: File
     outputSource: lima/out_dataset
   demux_bams:
-    type: File[]?
+    type: File[]
     outputSource: lima/demux_bams
   demux_bam_pbis:
     type: File[]?

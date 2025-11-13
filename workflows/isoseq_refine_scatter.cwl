@@ -8,7 +8,7 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  demux_dir: Directory
+  demux_bams: File[]
   barcodes: File
   threads:
     type: int?
@@ -21,18 +21,10 @@ inputs:
     default: true
 
 steps:
-  list_bams:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: demux_dir
-      pattern:
-        valueFrom: "^fl\\..*\\.bam$" # JavaScript regex pattern to match BAM files
-    out: [files]
-
   refine_each:
     run: ../tools/isoseq_refine.cwl
     in:
-      in_dataset: list_bams/files
+      in_dataset: demux_bams
       barcodes: barcodes
       biosample_name:
         valueFrom: $(inputs.in_dataset.nameroot.replace(/^fl\./,''))

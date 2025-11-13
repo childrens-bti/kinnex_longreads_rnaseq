@@ -66,7 +66,7 @@ outputs:
     outputBinding:
       glob: $(inputs.out_prefix).consensusreadset.xml
   demux_bams:
-    type: File[]?
+    type: File[]
     doc: Demultiplexed BAM files produced by lima (patterns like <out_prefix>*.bam)
     outputBinding:
       glob:

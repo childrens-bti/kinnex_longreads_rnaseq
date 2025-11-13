@@ -10,23 +10,18 @@ requirements:
   MultipleInputFeatureRequirement: {}
 
 inputs:
-  collapse_gff_dir: Directory
-  collapse_gff_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.gff$"
-    doc: Pattern to match collapse GFF files
+  collapse_gffs:
+    type: File[]
+    doc: Array of collapse GFF files
   annotation_gtf:
     type: File
     doc: Reference annotation GTF file (will be prepared by pigeon prepare)
   reference_fa:
     type: File
     doc: Reference FASTA file (will be prepared by pigeon prepare)
-  flnc_count_dir:
-    type: Directory
-    doc: Directory containing FLNC count files (*.flnc_count.txt) from isoseq collapse
-  flnc_count_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
+  flnc_counts:
+    type: File[]
+    doc: Array of FLNC count files (*.flnc_count.txt) from isoseq collapse
   out_prefix_base:
     type: string?
     default: "pigeon"
@@ -47,29 +42,11 @@ steps:
       log_level: log_level
     out: [prepared_annotation, prepared_reference]
 
-  list_collapse_gffs:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: collapse_gff_dir
-      pattern:
-        source: collapse_gff_pattern
-        default: "^collapse_isoforms\\..*\\.gff$"
-    out: [files]
-
-  list_flnc_counts:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: flnc_count_dir
-      pattern:
-        source: flnc_count_pattern
-        default: "^collapse_isoforms\\..*\\.flnc_count\\.txt$"
-    out: [files]
-
   prepare_isoforms:
     run: ../tools/pigeon_prepare.cwl
     in:
       input_files:
-        source: list_collapse_gffs/files
+        source: collapse_gffs
         valueFrom: $([self])
       log_level: log_level
     out: [prepared_isoforms]
@@ -82,7 +59,7 @@ steps:
       annotation_gtf: prepare_references/prepared_annotation
       reference_fa: prepare_references/prepared_reference
       isoforms_gff: prepare_isoforms/prepared_isoforms
-      flnc_count: list_flnc_counts/files
+      flnc_count: flnc_counts
       out_prefix_base: out_prefix_base
       out_prefix:
         valueFrom: |

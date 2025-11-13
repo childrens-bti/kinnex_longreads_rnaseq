@@ -8,7 +8,7 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  flnc_dir: Directory
+  flnc_bams: File[]
   threads:
     type: int?
     default: 0
@@ -20,18 +20,10 @@ inputs:
     default: false
 
 steps:
-  list_flnc_bams:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: flnc_dir
-      pattern:
-        valueFrom: "^flnc\\..*\\.bam$" # JavaScript regex pattern to match BAM files
-    out: [files]
-
   cluster_each:
     run: ../tools/isoseq_cluster2.cwl
     in:
-      flnc_input: list_flnc_bams/files
+      flnc_input: flnc_bams
       transcripts_bam:
         valueFrom:  $("clustered." + inputs.flnc_input.basename.replace(/^flnc\./,'').replace(/\.bam$/,'') + ".transcripts.bam")
       threads: threads

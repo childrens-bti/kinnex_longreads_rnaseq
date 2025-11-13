@@ -10,23 +10,17 @@ requirements:
 
 inputs:
   # Inputs from classify scatter workflow
-  classification_dir: Directory
-  classification_pattern:
-    type: string?
-    default: "^pigeon\\..*_classification\\.txt$"
-    doc: Pattern to match classification files
-  junctions_dir: Directory
-  junctions_pattern:
-    type: string?
-    default: "^pigeon\\..*_junctions\\.txt$"
-    doc: Pattern to match junctions files
-  isoforms_gff_dir:
-    type: Directory?
-    doc: Optional directory containing sorted isoforms GFF files from classify step
-  isoforms_gff_pattern:
-    type: string?
-    default: "^collapse_isoforms\\..*\\.sorted\\.gff$"
-    doc: Pattern to match sorted isoforms GFF files
+  classification_txts:
+    type: File[]
+    doc: Array of classification files
+  junctions_txts:
+    type: File[]
+    doc: Array of junctions files
+  isoforms_gffs:
+    type:
+      type: array
+      items: ["null", File]
+    doc: Array of sorted isoforms GFF files from classify step (may contain nulls)
   
   # Filter options
   polya_percent:
@@ -68,39 +62,12 @@ inputs:
     default: WARN
 
 steps:
-  list_classification_files:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: classification_dir
-      pattern:
-        source: classification_pattern
-        default: "^pigeon\\..*_classification\\.txt$"
-    out: [files]
-
-  list_junctions_files:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: junctions_dir
-      pattern:
-        source: junctions_pattern
-        default: "^pigeon\\..*_junctions\\.txt$"
-    out: [files]
-
-  list_isoforms_gffs:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: isoforms_gff_dir
-      pattern:
-        source: isoforms_gff_pattern
-        default: "^collapse_isoforms\\..*\\.sorted\\.gff$"
-    out: [files]
-
   filter_each:
     run: ../tools/pigeon_filter.cwl
     in:
-      classification_txt: list_classification_files/files
-      junctions_txt: list_junctions_files/files
-      isoforms_gff: list_isoforms_gffs/files
+      classification_txt: classification_txts
+      junctions_txt: junctions_txts
+      isoforms_gff: isoforms_gffs
       polya_percent: polya_percent
       polya_run_length: polya_run_length
       max_distance: max_distance

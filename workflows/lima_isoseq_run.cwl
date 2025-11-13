@@ -47,7 +47,7 @@ outputs:
     type: File
     outputSource: lima_isoseq/out_dataset
   demux_bams:
-    type: File[]?
+    type: File[]
     outputSource: lima_isoseq/demux_bams
   demux_bam_pbis:
     type: File[]?

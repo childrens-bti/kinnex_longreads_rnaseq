@@ -9,19 +9,8 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  aligned_bam_dir: Directory
-  flnc_bam_dir: Directory
-  aligned_pattern:
-    type: string?
-    default: "^mapped\\..*\\.bam$"
-    doc: >
-      ECMAScript regex (as string) matched against aligned BAM basenames.
-      Defaults to mapped BAMs from pbmm2 align.
-  flnc_pattern:
-    type: string?
-    default: "^flnc\\..*\\.bam$"
-    doc: >
-      ECMAScript regex (as string) matched against FLNC BAM basenames.
+  aligned_bams: File[]
+  flnc_bams: File[]
   min_aln_coverage:
     type: float?
     default: 0.99
@@ -48,42 +37,11 @@ inputs:
     default: WARN
 
 steps:
-  list_aligned_bams:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: aligned_bam_dir
-      pattern:
-        source: aligned_pattern
-        default: "^mapped\\..*\\.bam$"
-    out: [files]
-
-  list_flnc_bams:
-    run: ../tools/list_files_by_pattern.cwl
-    in:
-      dir: flnc_bam_dir
-      pattern:
-        source: flnc_pattern
-        default: "^flnc\\..*\\.bam$"
-    out: [files]
-
   collapse_each:
     run: ../tools/isoseq_collapse.cwl
     in:
-      alignments_bam: list_aligned_bams/files
-      flnc_bam:
-        source: list_flnc_bams/files
-        valueFrom: |
-          ${
-            var f = self;
-            var loc = f.location ? f.location : (f.path ? "file://" + f.path : null);
-            var out = { class: 'File' };
-            if (loc) out.location = loc;
-            if (f.basename) out.basename = f.basename;
-            if (f.nameroot) out.nameroot = f.nameroot;
-            if (f.nameext) out.nameext = f.nameext;
-            out.secondaryFiles = [{ class: 'File', location: (loc || '') + '.pbi' }];
-            return out;
-          }
+      alignments_bam: aligned_bams
+      flnc_bam: flnc_bams
       out_gff:
         valueFrom: $("collapse_isoforms." + inputs.alignments_bam.basename.replace(/\.transcripts\.bam$/, '').replace(/^mapped\.clustered\./, '') + ".gff")
       min_aln_coverage: min_aln_coverage

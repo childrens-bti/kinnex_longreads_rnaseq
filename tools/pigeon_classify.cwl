@@ -19,18 +19,14 @@ inputs:
       position: 1
   annotation_gtf:
     type: File?
-    doc: Reference annotation GTF with .pgi index
+    doc: Reference annotation GTF
     inputBinding:
       position: 2
-    secondaryFiles:
-      - .pgi
   reference_fa:
     type: File?
-    doc: Reference FASTA with .fai index
+    doc: Reference FASTA
     inputBinding:
       position: 3
-    secondaryFiles:
-      - .fai
   
   # Input/Output Options
   out_dir:

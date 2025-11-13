@@ -12,9 +12,6 @@ inputs:
   reference: File
   transcript_bams:
     type: File[]
-    secondaryFiles:
-      - pattern: .pbi
-        required: false
   preset:
     type: string?
     default: ISOSEQ

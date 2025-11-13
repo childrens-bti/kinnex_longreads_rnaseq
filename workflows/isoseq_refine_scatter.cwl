@@ -8,11 +8,7 @@ requirements:
   ScatterFeatureRequirement: {}
 
 inputs:
-  demux_bams:
-    type: File[]
-    secondaryFiles:
-      - pattern: .pbi
-        required: false
+  demux_bams: File[]
   barcodes: File
   threads:
     type: int?
@@ -31,11 +27,15 @@ steps:
       in_dataset: demux_bams
       barcodes: barcodes
       biosample_name:
-        valueFrom: $(inputs.in_dataset.nameroot.replace(/^fl\./,''))
+        valueFrom: |
+          ${
+            var name = inputs.in_dataset.nameroot || inputs.in_dataset.basename.replace(/\.bam$/, '');
+            return name.replace(/^fl\./, '');
+          }
       threads: threads
       log_level: log_level
       require_polya: require_polya
-    scatter: in_dataset         # scatter over the BAMs
+    scatter: in_dataset
     out: [out_flnc_bam, filter_summary_json, report_csv]
 
 outputs:

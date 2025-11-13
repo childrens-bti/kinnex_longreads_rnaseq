@@ -32,14 +32,26 @@ inputs:
   adapters_fa:
     type: File
     doc: Adapters FASTA file (e.g., mas8_primers.fasta)
+    sbg:suggestedValue:
+      class: File
+      path: 69136bfa3ae0fb7894e8f432
+      name: mas8_primers.fasta
   
   reference_fa:
     type: File
     doc: Reference genome FASTA file
+    sbg:suggestedValue:
+      class: File
+      path: 69136c872c7f921b1de307c3
+      name: GRCh38.primary_assembly.genome.fa
   
   annotation_gtf:
     type: File
     doc: Reference annotation GTF file
+    sbg:suggestedValue:
+      class: File
+      path: 69136c872c7f921b1de307c2
+      name: gencode.v39.primary_assembly.annotation.gtf
   
   # Skera options
   skera_out_prefix:
@@ -59,6 +71,10 @@ inputs:
   lima_barcodes:
     type: File
     doc: Barcode/Primer FASTA for lima demultiplexing
+    sbg:suggestedValue:
+      class: File
+      path: 69136bf977b8bd08be280d35
+      name: IsoSeq_v2_primers_12.fasta
   lima_threads:
     type: int?
     default: 0
@@ -195,7 +211,9 @@ steps:
   refine:
     run: workflows/isoseq_refine_scatter.cwl
     in:
-      demux_bams: lima/demux_bams
+      demux_bams:
+        source: lima/demux_bams
+        valueFrom: $(self)
       barcodes: lima_barcodes
       threads: refine_threads
       log_level: log_level
@@ -206,7 +224,9 @@ steps:
   cluster:
     run: workflows/isoseq_cluster2_scatter.cwl
     in:
-      flnc_bams: refine/out_flnc_bams
+      flnc_bams:
+        source: refine/out_flnc_bams
+        valueFrom: $(self)
       threads: cluster_threads
       log_level: log_level
       singletons: cluster_singletons
@@ -218,7 +238,9 @@ steps:
     run: workflows/pbmm2_align_scatter.cwl
     in:
       reference: reference_fa
-      transcript_bams: cluster/transcripts_bams
+      transcript_bams:
+        source: cluster/transcripts_bams
+        valueFrom: $(self)
       preset: pbmm2_preset
       threads: pbmm2_threads
       sort: pbmm2_sort
@@ -231,8 +253,12 @@ steps:
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
-      aligned_bams: pbmm2/mapped_bams
-      flnc_bams: refine/out_flnc_bams
+      aligned_bams:
+        source: pbmm2/mapped_bams
+        valueFrom: $(self)
+      flnc_bams:
+        source: refine/out_flnc_bams
+        valueFrom: $(self)
       min_aln_coverage: collapse_min_aln_coverage
       min_aln_identity: collapse_min_aln_identity
       max_fuzzy_junction: collapse_max_fuzzy_junction
@@ -434,10 +460,10 @@ outputs:
     doc: Transcript discovery saturation analysis
 
 $namespaces:
-  sbg: https://sevenbridges.com
+  sbg: "https://sevenbridges.com/"
 hints:
-  - class: sbg:maxNumberOfParallelInstances
-    value: 2
+- class: "sbg:maxNumberOfParallelInstances"
+  value: 2
 "sbg:links":
-- id: 'https://github.com/childrens-bti/kinnex_longreads/tree/feat/workflow_sketch' # will update with stable release
+- id: "https://github.com/childrens-bti/kinnex_longreads/tree/feat/workflow_sketch" # will update with stable release
   label: github-release

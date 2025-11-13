@@ -11,14 +11,8 @@ requirements:
 inputs:
   aligned_bams:
     type: File[]
-    secondaryFiles:
-      - pattern: .bai
-        required: false
   flnc_bams:
     type: File[]
-    secondaryFiles:
-      - pattern: .pbi
-        required: false
   min_aln_coverage:
     type: float?
     default: 0.99

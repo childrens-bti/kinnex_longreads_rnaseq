@@ -74,26 +74,22 @@ outputs:
     type: File[]
     doc: Demultiplexed BAM files produced by lima (patterns like <out_prefix>*.bam)
     outputBinding:
-      glob:
-        - $(inputs.out_prefix)*.bam
+      glob: $(inputs.out_prefix).*.bam
     secondaryFiles:
       - pattern: .pbi
         required: false
   counts:
     type: File?
     outputBinding:
-      glob:
-        - $(inputs.out_prefix).lima.counts
+      glob: $(inputs.out_prefix).lima.counts
   report:
     type: File?
     outputBinding:
-      glob:
-        - $(inputs.out_prefix).lima.report
+      glob: $(inputs.out_prefix).lima.report
   summary:
     type: File?
     outputBinding:
-      glob:
-        - $(inputs.out_prefix).lima.summary
+      glob: $(inputs.out_prefix).lima.summary
   lima_log:
     type: File?
     doc: Log file from lima execution

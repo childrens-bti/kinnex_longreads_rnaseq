@@ -53,6 +53,10 @@ inputs:
       path: 69136c872c7f921b1de307c2
       name: gencode.v39.primary_assembly.annotation.gtf
   
+  sample_manifest:
+    type: File?
+    doc: Optional TSV manifest with file_name and Bioassay_ID columns for sample ID mapping
+  
   # Skera options
   skera_out_prefix:
     type: string?
@@ -184,6 +188,14 @@ inputs:
     default: INFO
 
 steps:
+  # Step 0: Parse manifest to create barcode-to-Bioassay_ID mapping (optional)
+  parse_manifest:
+    run: tools/parse_manifest.cwl
+    in:
+      manifest: sample_manifest
+    when: $(inputs.manifest != null)
+    out: [barcode_mapping]
+
   # Step 1: Segment HiFi reads
   skera:
     run: workflows/skera.cwl
@@ -202,6 +214,7 @@ steps:
     in:
       in_dataset: skera/segmented_bam
       barcodes: lima_barcodes
+      barcode_mapping: parse_manifest/barcode_mapping
       out_prefix: lima_out_prefix
       threads: lima_threads
       log_level: log_level

@@ -39,7 +39,7 @@ inputs:
       prefix: --log-level
   log_file:
     type: string?
-    default: lima-isoseq.log
+    default: fl.lima-isoseq.log
     inputBinding:
       prefix: --log-file
   isoseq_mode:

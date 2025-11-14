@@ -5,10 +5,16 @@ label: Run lima --isoseq on segmented dataset
 
 requirements:
   InlineJavascriptRequirement: {}
+  SubworkflowFeatureRequirement: {}
+  StepInputExpressionRequirement: {}
+  MultipleInputFeatureRequirement: {}
 
 inputs:
   in_dataset: File
   barcodes: File
+  barcode_mapping:
+    type: File?
+    doc: "Optional JSON mapping file from parse_manifest (barcode -> Bioassay_ID)"
   out_prefix:
     type: string?
     default: fl
@@ -20,7 +26,7 @@ inputs:
     default: INFO
   log_file:
     type: string?
-    default: lima-isoseq.log
+    default: fl.lima-isoseq.log
 
 steps:
   lima_isoseq:
@@ -42,13 +48,26 @@ steps:
         default: true
     out: [out_dataset, demux_bams, counts, report, summary, lima_log]
 
+  rename_with_bioassay_id:
+    when: $(inputs.barcode_mapping != null)
+    run: ../tools/rename_bams_with_bioassay_id.cwl
+    in:
+      input_bams:
+        source: lima_isoseq/demux_bams
+      barcode_mapping:
+        source: barcode_mapping
+    out: [renamed_bams]
+
 outputs:
   out_dataset:
     type: File
     outputSource: lima_isoseq/out_dataset
   demux_bams:
     type: File[]
-    outputSource: lima_isoseq/demux_bams
+    outputSource: 
+      - rename_with_bioassay_id/renamed_bams
+      - lima_isoseq/demux_bams
+    pickValue: first_non_null
   counts:
     type: File?
     outputSource: lima_isoseq/counts

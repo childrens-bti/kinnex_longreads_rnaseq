@@ -32,6 +32,11 @@ annotation_gtf:
   class: File
   path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/gencode.v39.primary_assembly.annotation.gtf
 
+# Sample manifest (optional - for Bioassay ID mapping)
+sample_manifest:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/manifests/itt-434-rokita-rood-short-and-long-read-rnaseq_IDs_assigned.tsv
+
 
 # ============================================================================
 # OPTIONAL PARAMETERS (with defaults)

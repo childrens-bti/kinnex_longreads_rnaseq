@@ -18,6 +18,10 @@ inputs:
   singletons:
     type: boolean?
     default: false
+  write_bam:
+    type: boolean?
+    default: false
+    doc: If true, write annotated BAM file
 
 steps:
   cluster_each:
@@ -31,6 +35,14 @@ steps:
       log_file:
         valueFrom: $(inputs.flnc_input.basename.replace(/\.bam$/, '').replace(/\.flnc\./, '.clustered.') + '.isoseq-cluster2.log')
       singletons: singletons
+      write_bam:
+        valueFrom: |
+          ${
+            if (inputs.write_bam === true) {
+              return inputs.flnc_input.basename.replace(/\.bam$/, '').replace(/\.flnc\./, '.clustered.') + '.annotated.bam';
+            }
+            return null;
+          }
 
     out: [transcripts_output, singletons_output, annotated_bam, report_csv]
     scatter: flnc_input

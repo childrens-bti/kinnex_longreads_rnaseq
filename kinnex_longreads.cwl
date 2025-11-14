@@ -98,6 +98,10 @@ inputs:
   cluster_singletons:
     type: boolean?
     default: false
+  cluster_write_bam:
+    type: boolean?
+    default: false
+    doc: Write annotated BAM file from cluster2
   
   # PBMM2 options
   pbmm2_threads:
@@ -243,6 +247,7 @@ steps:
       threads: cluster_threads
       log_level: log_level
       singletons: cluster_singletons
+      write_bam: cluster_write_bam
 
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 

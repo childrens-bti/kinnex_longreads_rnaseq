@@ -7,14 +7,13 @@ requirements:
   InlineJavascriptRequirement: {}
   SubworkflowFeatureRequirement: {}
   StepInputExpressionRequirement: {}
-  MultipleInputFeatureRequirement: {}
 
 inputs:
   in_dataset: File
   barcodes: File
   barcode_mapping:
-    type: File?
-    doc: "Optional JSON mapping file from parse_manifest (barcode -> Bioassay_ID)"
+    type: File
+    doc: "JSON mapping file from parse_manifest (barcode -> Bioassay_ID)"
   out_prefix:
     type: string?
     default: fl
@@ -49,7 +48,6 @@ steps:
     out: [out_dataset, demux_bams, counts, report, summary, lima_log]
 
   rename_with_bioassay_id:
-    when: $(inputs.barcode_mapping != null)
     run: ../tools/rename_bams_with_bioassay_id.cwl
     in:
       input_bams:
@@ -64,10 +62,7 @@ outputs:
     outputSource: lima_isoseq/out_dataset
   demux_bams:
     type: File[]
-    outputSource: 
-      - rename_with_bioassay_id/renamed_bams
-      - lima_isoseq/demux_bams
-    pickValue: first_non_null
+    outputSource: rename_with_bioassay_id/renamed_bams
   counts:
     type: File?
     outputSource: lima_isoseq/counts

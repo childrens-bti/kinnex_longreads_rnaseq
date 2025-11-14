@@ -5,15 +5,45 @@ label: Kinnex/MAS-Iso-Seq Complete Long-Read Pipeline
 doc: |
   Complete end-to-end pipeline for PacBio Kinnex/MAS-Iso-Seq long-read transcriptome analysis.
   
+  This workflow processes PacBio HiFi reads through a comprehensive isoform discovery and 
+  characterization pipeline, integrating bioassay ID tracking for sample provenance.
+  
   Pipeline Steps:
-  1. Skera: Segment HiFi reads into individual transcripts
-  2. Lima: Demultiplex segmented reads by barcodes
-  3. IsoSeq Refine: Trim and filter full-length non-concatemer (FLNC) reads
-  4. IsoSeq Cluster2: Cluster FLNC reads into transcript models
-  5. PBMM2: Align transcript models to reference genome
-  6. IsoSeq Collapse: Collapse aligned reads into unique isoforms
-  7. Pigeon Classify: Classify isoforms based on reference annotation
-  8. Pigeon Filter & Report: Filter classified isoforms and generate saturation reports
+  0. Parse Manifest: Extract barcode-to-Bioassay_ID mappings from TSV manifest (required)
+  1. Skera: Segment HiFi reads containing multiple transcripts into individual molecules
+  2. Lima: Demultiplex segmented reads by barcodes and apply Bioassay ID prefixes
+  3. IsoSeq Refine: Trim polyA tails and filter full-length non-concatemer (FLNC) reads
+  4. IsoSeq Cluster2: Cluster FLNC reads into consensus transcript models
+  5. PBMM2: Align transcript models to reference genome using minimap2
+  6. IsoSeq Collapse: Collapse redundant isoforms into unique transcript representations
+  7. Pigeon Prepare & Classify: Classify isoforms against reference annotation
+  8. Pigeon Filter & Report: Apply quality filters and generate saturation analysis
+  
+  Key Features:
+  - Bioassay ID Integration: All outputs are prefixed with stable sample identifiers (BA_XXXXX)
+    for traceability and downstream data integration
+  - Barcode Preservation: Original barcode names are maintained in filenames alongside BA_IDs
+  - Scatter Parallelization: Steps 3-8 process samples in parallel for efficiency
+  - Comprehensive QC: Generates reports at each step for quality assessment
+  
+  Input Requirements:
+  - HiFi BAM: PacBio HiFi sequencing reads (with optional .pbi index)
+  - Sample Manifest: TSV file mapping lima output filenames to Bioassay_IDs
+    Required columns: file_name, Bioassay_ID
+    Example: fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam -> BA_9B3T9910
+  - Reference Files: Genome FASTA, annotation GTF, adapter sequences, barcode primers
+  
+  Output Naming Convention:
+  All outputs follow the pattern: BA_<ID>.<step>.<barcode>.<suffix>
+  Example progression:
+  - Lima:     BA_9B3T9910.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
+  - Refine:   BA_9B3T9910.flnc.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
+  - Cluster:  BA_9B3T9910.clustered.IsoSeqX_bc01_5p--IsoSeqX_3p.transcripts.bam
+  - Align:    BA_9B3T9910.mapped.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
+  - Collapse: BA_9B3T9910.collapse_isoforms.IsoSeqX_bc01_5p--IsoSeqX_3p.gff
+  - Classify: BA_9B3T9910.pigeon.IsoSeqX_bc01_5p--IsoSeqX_3p_classification.txt
+  
+  For detailed parameter descriptions and tuning recommendations, see individual tool documentation.
 
 requirements:
   SubworkflowFeatureRequirement: {}

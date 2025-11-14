@@ -23,8 +23,6 @@ inputs:
     doc: Barcode/Primer FASTA or BarcodeSet XML
     inputBinding:
       position: 2
-  biosample_name:
-    type: string
   threads:
     type: int?
     default: 0
@@ -43,14 +41,15 @@ inputs:
 # Only ONE positional argument for the output filename (the FLNC BAM)
 arguments:
   - position: 3
-    valueFrom: $("flnc." + inputs.biosample_name + ".bam")
+    valueFrom: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.bam')
 
-stderr: $("flnc." + inputs.biosample_name + ".refine.log")
+stderr: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.refine.log')
+
 outputs:
   out_flnc_bam:
     type: File
     outputBinding:
-      glob: flnc.$(inputs.biosample_name).bam
+      glob: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.bam')
     secondaryFiles:
       - pattern: .pbi
         required: false
@@ -58,10 +57,10 @@ outputs:
   filter_summary_json:
     type: File?
     outputBinding:
-      glob: flnc.$(inputs.biosample_name).filter_summary.report.json
+      glob: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.filter_summary.report.json')
 
   report_csv:
     type: File?
     outputBinding:
-      glob: flnc.$(inputs.biosample_name).report.csv
+      glob: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.report.csv')
 

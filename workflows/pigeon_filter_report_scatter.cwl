@@ -79,9 +79,11 @@ steps:
       log_file:
         valueFrom: |
           ${
+            // Input: BA_04XR33G7.classify.IsoSeqX_bc02_5p--IsoSeqX_3p_classification.txt
+            // Output: BA_04XR33G7.filter.IsoSeqX_bc02_5p--IsoSeqX_3p.log
             var basename = inputs.classification_txt.basename;
-            var sample = basename.replace(/_classification\.txt$/, '');
-            return "pigeon_filter_" + sample + ".log";
+            var sample = basename.replace(/_classification\.txt$/, '').replace(/\.classify\./, '.filter.');
+            return sample + ".log";
           }
     out: [filtered_classification_txt, filtered_junctions_txt, filtered_reasons_txt, filtered_gff, filtered_report_json, filtered_summary_txt]
     scatter: [classification_txt, junctions_txt, isoforms_gff]
@@ -107,7 +109,7 @@ steps:
           ${
             var basename = inputs.classification_txt.basename;
             var sample = basename.replace(/\.txt$/, '');
-            return "pigeon_report_" + sample + ".log";
+            return sample + ".report.log";
           }
     out: [saturation_txt]
     scatter: [classification_txt]

@@ -26,12 +26,6 @@ steps:
     in:
       in_dataset: demux_bams
       barcodes: barcodes
-      biosample_name:
-        valueFrom: |
-          ${
-            var name = inputs.in_dataset.nameroot || inputs.in_dataset.basename.replace(/\.bam$/, '');
-            return name.replace(/^fl\./, '');
-          }
       threads: threads
       log_level: log_level
       require_polya: require_polya

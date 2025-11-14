@@ -45,7 +45,7 @@ steps:
       alignments_bam: aligned_bams
       flnc_bam: flnc_bams
       out_gff:
-        valueFrom: $("collapse_isoforms." + inputs.alignments_bam.basename.replace(/\.transcripts\.bam$/, '').replace(/^mapped\.clustered\./, '') + ".gff")
+        valueFrom: $(inputs.alignments_bam.basename.replace(/\.transcripts\.bam$/, '').replace(/\.mapped\./, '.collapse_isoforms.') + '.gff')
       min_aln_coverage: min_aln_coverage
       min_aln_identity: min_aln_identity
       max_fuzzy_junction: max_fuzzy_junction
@@ -55,7 +55,7 @@ steps:
       threads: threads
       log_level: log_level
       log_file:
-        valueFrom: $("collapse_isoforms." + inputs.alignments_bam.basename.replace(/\.transcripts\.bam$/, '').replace(/^mapped\.clustered\./, '') + ".log")
+        valueFrom: $(inputs.alignments_bam.basename.replace(/\.transcripts\.bam$/, '').replace(/\.mapped\./, '.collapse_isoforms.') + '.log')
     out: [collapse_gff, collapse_fasta, group_txt, flnc_count_txt, read_stat_txt, collapse_report_json, abundance_txt]
     scatter: [alignments_bam, flnc_bam]
     scatterMethod: dotproduct

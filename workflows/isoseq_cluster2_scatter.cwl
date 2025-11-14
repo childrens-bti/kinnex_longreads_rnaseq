@@ -25,11 +25,11 @@ steps:
     in:
       flnc_input: flnc_bams
       transcripts_bam:
-        valueFrom:  $("clustered." + inputs.flnc_input.basename.replace(/^flnc\./,'').replace(/\.bam$/,'') + ".transcripts.bam")
+        valueFrom: $(inputs.flnc_input.basename.replace(/\.bam$/, '').replace(/\.flnc\./, '.clustered.') + '.transcripts.bam')
       threads: threads
       log_level: log_level
       log_file:
-        valueFrom: $("clustered." + inputs.flnc_input.basename.replace(/^flnc\./,'').replace(/\.bam$/,'') + ".isoseq-cluster2.log")
+        valueFrom: $(inputs.flnc_input.basename.replace(/\.bam$/, '').replace(/\.flnc\./, '.clustered.') + '.isoseq-cluster2.log')
       singletons: singletons
 
     out: [transcripts_output, singletons_output, annotated_bam, report_csv]

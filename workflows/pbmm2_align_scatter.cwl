@@ -38,7 +38,7 @@ steps:
       reference: reference
       in_bam: transcript_bams
       out_bam:
-        valueFrom: $("mapped." + inputs.in_bam.basename.replace(/\.bam$/,'') + ".bam")
+        valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.bam')
       preset: preset
       threads: threads
       sort: sort
@@ -47,7 +47,7 @@ steps:
       min_gap_comp_id_perc: min_gap_comp_id_perc
       log_level: log_level
       log_file:
-        valueFrom: $("pbmm2.align." + inputs.in_bam.basename.replace(/\.bam$/,'') + ".log")
+        valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.pbmm2.log')
     out: [mapped_bam, log_file_output]
     scatter: in_bam
     scatterMethod: dotproduct

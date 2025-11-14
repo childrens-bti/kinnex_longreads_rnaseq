@@ -64,10 +64,13 @@ steps:
       out_prefix:
         valueFrom: |
           ${
+            // Extract sample from GFF basename and use out_prefix_base
+            // Input: BA_04XR33G7.collapse_isoforms.IsoSeqX_bc02_5p--IsoSeqX_3p.sorted.gff
+            // Output: BA_04XR33G7.pigeon.IsoSeqX_bc02_5p--IsoSeqX_3p (if out_prefix_base="pigeon")
             var prefix_base = inputs.out_prefix_base || "pigeon";
             var basename = inputs.isoforms_gff.basename;
-            var sample = basename.replace(/^collapse_isoforms\./, '').replace(/\.sorted\.gff$/, '').replace(/\.gff$/, '');
-            return prefix_base + "." + sample;
+            var sample = basename.replace(/\.gff$/, '').replace(/\.sorted$/, '').replace(/\.collapse_isoforms\./, '.' + prefix_base + '.');
+            return sample;
           }
       threads: threads
       log_level: log_level
@@ -76,8 +79,8 @@ steps:
           ${
             var prefix_base = inputs.out_prefix_base || "pigeon";
             var basename = inputs.isoforms_gff.basename;
-            var sample = basename.replace(/^collapse_isoforms\./, '').replace(/\.sorted\.gff$/, '').replace(/\.gff$/, '');
-            return prefix_base + "_classify_" + sample + ".log";
+            var sample = basename.replace(/\.gff$/, '').replace(/\.sorted$/, '').replace(/\.collapse_isoforms\./, '.' + prefix_base + '.');
+            return sample + ".log";
           }
     out: [classification_txt, junctions_txt, report_json, summary_txt]
     scatter: [isoforms_gff, flnc_count]

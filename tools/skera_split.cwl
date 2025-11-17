@@ -48,9 +48,9 @@ requirements:
           OPTS="$OPTS --log-file $LOG_FILE"
 
           if [[ "$OUTPUT_XML_FLAG" == "true" ]]; then
-            OUT="$PREFIX.consensusreadset.xml"
+            OUT="$PREFIX.segmented.consensusreadset.xml"
           else
-            OUT="$PREFIX.bam"
+            OUT="$PREFIX.segmented.bam"
           fi
 
           echo "+ skera $OPTS \"$INPUT\" \"$ADAPTERS\" \"$OUT\"" >&2
@@ -73,8 +73,8 @@ inputs:
     inputBinding:
       position: 2
   out_prefix:
-    type: string?
-    default: segmented
+    type: string
+    doc: Output prefix for segmented files. Users must specify a unique project name/ID to avoid file collisions.
     inputBinding:
       position: 3
   threads:
@@ -104,14 +104,14 @@ outputs:
   segmented_bam:
     type: File
     outputBinding:
-      glob: $(inputs.out_prefix).bam
+      glob: $(inputs.out_prefix).segmented.bam
     secondaryFiles:
       - pattern: .pbi
         required: false
   non_passing_bam:
     type: File
     outputBinding:
-      glob: $(inputs.out_prefix).non_passing.bam
+      glob: $(inputs.out_prefix).segmented.non_passing.bam
     secondaryFiles:
       - pattern: .pbi
         required: false
@@ -119,20 +119,20 @@ outputs:
     type: File?
     doc: ConsensusReadSet XML (only created when use_dataset_xml=true and may not be output by skera)
     outputBinding:
-      glob: $(inputs.out_prefix).consensusreadset.xml
+      glob: $(inputs.out_prefix).segmented.consensusreadset.xml
   summary_csv:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).summary.csv
+      glob: $(inputs.out_prefix).segmented.summary.csv
   ligations_csv:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).ligations.csv
+      glob: $(inputs.out_prefix).segmented.ligations.csv
   read_lengths_csv:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).read_lengths.csv
+      glob: $(inputs.out_prefix).segmented.read_lengths.csv
   adapters_csv_gz:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).found_adapters.csv.gz
+      glob: $(inputs.out_prefix).segmented.found_adapters.csv.gz

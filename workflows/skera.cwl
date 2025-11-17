@@ -19,8 +19,8 @@ inputs:
     type: File
     doc: Adapters FASTA (e.g., params/mas8_primers.fasta)
   out_prefix:
-    type: string?
-    default: segmented
+    type: string
+    doc: Output prefix for segmented files. Specify a unique project name/ID to avoid file collisions.
   threads:
     type: int?
     default: 0

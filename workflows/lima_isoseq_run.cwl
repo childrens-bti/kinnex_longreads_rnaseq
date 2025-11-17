@@ -15,17 +15,14 @@ inputs:
     type: File
     doc: "JSON mapping file from parse_manifest (barcode -> Bioassay_ID)"
   out_prefix:
-    type: string?
-    default: fl
+    type: string
+    doc: Output prefix for lima isoseq demultiplexing (same as skera project_name)
   threads:
     type: int?
     default: 0
   log_level:
     type: string?
     default: INFO
-  log_file:
-    type: string?
-    default: fl.lima-isoseq.log
 
 steps:
   lima_isoseq:
@@ -36,7 +33,8 @@ steps:
       out_prefix: out_prefix
       threads: threads
       log_level: log_level
-      log_file: log_file
+      log_file:
+        valueFrom: $(inputs.out_prefix + ".fl.lima-isoseq.log")
       isoseq_mode:
         default: true
       peek_guess:

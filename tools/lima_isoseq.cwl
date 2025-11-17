@@ -23,11 +23,10 @@ inputs:
     inputBinding:
       position: 2
   out_prefix:
-    type: string?
-    default: fl
+    type: string
     inputBinding:
       position: 3
-      valueFrom: $( self + ".consensusreadset.xml" )
+      valueFrom: $(self + ".fl.consensusreadset.xml")
   threads:
     type: int?
     default: 0
@@ -39,7 +38,6 @@ inputs:
       prefix: --log-level
   log_file:
     type: string?
-    default: fl.lima-isoseq.log
     inputBinding:
       prefix: --log-file
   isoseq_mode:
@@ -69,27 +67,27 @@ outputs:
   out_dataset:
     type: File
     outputBinding:
-      glob: $(inputs.out_prefix).consensusreadset.xml
+      glob: $(inputs.out_prefix).fl.consensusreadset.xml
   demux_bams:
     type: File[]
     doc: Demultiplexed BAM files produced by lima (patterns like <out_prefix>*.bam)
     outputBinding:
-      glob: $(inputs.out_prefix).*.bam
+      glob: $(inputs.out_prefix).fl.*.bam
     secondaryFiles:
       - pattern: .pbi
         required: false
   counts:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).lima.counts
+      glob: $(inputs.out_prefix).fl.lima.counts
   report:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).lima.report
+      glob: $(inputs.out_prefix).fl.lima.report
   summary:
     type: File?
     outputBinding:
-      glob: $(inputs.out_prefix).lima.summary
+      glob: $(inputs.out_prefix).fl.lima.summary
   lima_log:
     type: File?
     doc: Log file from lima execution

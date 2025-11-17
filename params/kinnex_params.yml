@@ -5,6 +5,8 @@
 # REQUIRED INPUTS
 # ============================================================================
 
+# project_name: Unique project name/ID to avoid file collisions (e.g., PROJECT123, Kinnex_ABC)
+project_name: SR009023_Kinnex
 # Primary input data
 hifi_bam:
   class: File
@@ -45,14 +47,12 @@ sample_manifest:
 # ----------------------------------------------------------------------------
 # Skera (Segmentation) Options
 # ----------------------------------------------------------------------------
-skera_out_prefix: segmented
 skera_threads: 0                    # 0 = auto-detect
 skera_use_dataset_xml: true
 
 # ----------------------------------------------------------------------------
 # Lima (Demultiplexing) Options
 # ----------------------------------------------------------------------------
-lima_out_prefix: fl
 lima_threads: 0                     # 0 = auto-detect
 
 # ----------------------------------------------------------------------------

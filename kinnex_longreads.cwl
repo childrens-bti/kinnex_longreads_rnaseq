@@ -52,6 +52,11 @@ requirements:
 
 inputs:
   # Primary inputs
+  project_name:
+    type: string
+    doc: |
+      Output prefix for segmented files and lima reports and embedded in all output filenames. 
+      Specify a unique project name/ID to avoid file collisions (e.g., PROJECT123, SR009023_Kinnex).
   hifi_bam:
     type: File
     doc: HiFi BAM file containing reads to segment
@@ -86,11 +91,9 @@ inputs:
   sample_manifest:
     type: File
     doc: TSV manifest with file_name and Bioassay_ID columns for sample ID mapping (required)
-  
+
+
   # Skera options
-  skera_out_prefix:
-    type: string?
-    default: segmented
   skera_threads:
     type: int?
     default: 0
@@ -99,9 +102,6 @@ inputs:
     default: true
   
   # Lima options
-  lima_out_prefix:
-    type: string?
-    default: fl
   lima_barcodes:
     type: File
     doc: Barcode/Primer FASTA for lima demultiplexing
@@ -235,7 +235,7 @@ steps:
     in:
       hifi_bam: hifi_bam
       adapters_fa: adapters_fa
-      out_prefix: skera_out_prefix
+      out_prefix: project_name
       threads: skera_threads
       use_dataset_xml: skera_use_dataset_xml
       log_level: log_level
@@ -248,10 +248,10 @@ steps:
       in_dataset: skera/segmented_bam
       barcodes: lima_barcodes
       barcode_mapping: parse_manifest/barcode_mapping
-      out_prefix: lima_out_prefix
+      out_prefix: project_name
       threads: lima_threads
       log_level: log_level
-    out: [out_dataset, demux_bams, counts, report, summary, lima_log]
+    out: [out_dataset, demux_bams, counts, report, summary]
 
   # Step 3: Refine FLNC reads (scatter across barcodes)
   refine:
@@ -389,9 +389,6 @@ outputs:
   lima_summary:
     type: File?
     outputSource: lima/summary
-  lima_log:
-    type: File?
-    outputSource: lima/lima_log
   
   # Refine outputs
   flnc_bams:

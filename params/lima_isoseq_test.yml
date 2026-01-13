@@ -1,0 +1,7 @@
+in_dataset:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/outputs/skera_test/segmented.bam
+
+barcodes:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/references/IsoSeq_v2_primers_12.fasta

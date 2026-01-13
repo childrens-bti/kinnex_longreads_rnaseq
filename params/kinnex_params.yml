@@ -1,0 +1,115 @@
+# Unified parameter file for the complete Kinnex/MAS-Iso-Seq pipeline
+# This single YAML file contains all inputs needed to run main_workflow.cwl
+
+# ============================================================================
+# REQUIRED INPUTS
+# ============================================================================
+
+# project_name: Unique project name/ID to avoid file collisions (e.g., PROJECT123, Kinnex_ABC)
+project_name: SR009023_Kinnex
+# Primary input data
+hifi_bam:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/m84081_250911_195056_s1.0_1pct.hifi_reads.bcM0001.bam
+  # original full dataset example:
+  # path: /home/ubuntu/kinnex_longreads/data/bti-private-us-east-1-prd-rokita-lab/source/SR009023_Kinnex/SMRTcell1/hifi_reads/m84091_250103_164424_s3.bc1001.bam
+
+# Aadapters FASTA file
+adapters_fa:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/references/mas8_primers.fasta
+
+# lima Barcode sequences FASTA file
+lima_barcodes:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/references/IsoSeq_v2_primers_12.fasta
+
+# Reference genome FASTA
+reference_fa:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/GRCh38.primary_assembly.genome.fa
+
+# Reference annotation GTF
+annotation_gtf:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/bti-openaccess-us-east-1-prd-references/gencode.v39.primary_assembly.annotation.gtf
+
+# Sample manifest (optional - for Bioassay ID mapping)
+sample_manifest:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/manifests/itt-434-rokita-rood-short-and-long-read-rnaseq_IDs_assigned.tsv
+
+
+# ============================================================================
+# OPTIONAL PARAMETERS (with defaults)
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# Skera (Segmentation) Options
+# ----------------------------------------------------------------------------
+skera_threads: 0                    # 0 = auto-detect
+skera_use_dataset_xml: true
+
+# ----------------------------------------------------------------------------
+# Lima (Demultiplexing) Options
+# ----------------------------------------------------------------------------
+lima_threads: 0                     # 0 = auto-detect
+
+# ----------------------------------------------------------------------------
+# IsoSeq Refine Options
+# ----------------------------------------------------------------------------
+refine_threads: 0                   # 0 = auto-detect
+refine_require_polya: true          # Require poly(A) tail
+
+# ----------------------------------------------------------------------------
+# IsoSeq Cluster2 Options
+# ----------------------------------------------------------------------------
+cluster_threads: 0                  # 0 = auto-detect
+cluster_singletons: false           # Don't output singleton reads
+
+# ----------------------------------------------------------------------------
+# PBMM2 Alignment Options
+# ----------------------------------------------------------------------------
+pbmm2_threads: 0                    # 0 = auto-detect
+pbmm2_preset: ISOSEQ                # Alignment preset for Iso-Seq
+pbmm2_sort: true                    # Sort output BAM
+pbmm2_min_gap_comp_id_perc: 95.0    # Min alignment identity
+
+# ----------------------------------------------------------------------------
+# IsoSeq Collapse Options
+# ----------------------------------------------------------------------------
+collapse_min_aln_coverage: 0.99     # Min alignment coverage (99%)
+collapse_min_aln_identity: 0.95     # Min alignment identity (95%)
+collapse_max_fuzzy_junction: 5      # Max fuzzy junction tolerance (bp)
+collapse_max_5p_diff: 50            # Max 5' difference (bp)
+collapse_max_3p_diff: 100           # Max 3' difference (bp)
+collapse_do_not_collapse_extra_5exons: true  # Don't collapse extra 5' exons
+collapse_threads: 0                 # 0 = auto-detect
+
+# ----------------------------------------------------------------------------
+# Pigeon Classify Options
+# ----------------------------------------------------------------------------
+classify_threads: 0                 # 0 = auto-detect
+
+# ----------------------------------------------------------------------------
+# Pigeon Filter Options
+# ----------------------------------------------------------------------------
+filter_polya_percent: 0.6           # Min poly(A) percentage
+filter_polya_run_length: 6          # Min poly(A) run length
+filter_max_distance: 50             # Max distance to reference (bp)
+filter_min_cov: 3                   # Min coverage
+filter_mono_exon: false             # Don't filter mono-exon transcripts
+filter_skip_junctions: false        # Don't skip junction filtering
+filter_threads: 0                   # 0 = auto-detect
+
+# ----------------------------------------------------------------------------
+# Pigeon Report (Saturation) Options
+# ----------------------------------------------------------------------------
+report_sub_sample_increment: 0      # Sub-sampling increment (0 = auto)
+report_exclude_singletons: false    # Don't exclude singletons
+report_threads: 0                   # 0 = auto-detect
+
+# ----------------------------------------------------------------------------
+# General Options
+# ----------------------------------------------------------------------------
+log_level: INFO                     # Logging level: DEBUG, INFO, WARN, ERROR

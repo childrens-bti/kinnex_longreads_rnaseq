@@ -1,0 +1,16 @@
+hifi_dir:
+  class: Directory
+  path: /home/ubuntu/kinnex_longreads/data/sampled_hifi_reads/
+  
+
+adapters_fa:
+  class: File
+  path: /home/ubuntu/kinnex_longreads/data/references/mas8_primers.fasta
+
+reference_fa:
+  class: File
+  path: /path/to/reference.fasta
+
+annotation_gtf:
+  class: File
+  path: /path/to/annotation.gtf

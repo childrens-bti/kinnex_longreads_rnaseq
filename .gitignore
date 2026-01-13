@@ -15,7 +15,8 @@ __pycache__/
 *.inputs.json
 *.outputs.json
 **/*.sh
-!prep.sh
+!mount_s3.sh
+!run_data.sh
 *.err
 *.out
 tmp/
@@ -28,22 +29,20 @@ tmp/
 *.zip
 outputs/*
 !outputs/.gitkeep
-params/*
-!params/.gitkeep
 test/
 logs/*
 !logs/.gitkeep
 sbg-hints/* 
 !sbg-hints/.gitkeep
-workflows/*
-!workflows/.gitkeep
-tools/*
-!tools/.gitkeep
-scripts/*
-!scripts/.gitkeep
 # harmonized data
 data/*
 !data/.gitkeep
 # manifest files
 manifests/*
 !manifests/.gitkeep
+
+.cwl-out/
+.cwl-tmp/
+
+tests/
+summaries/

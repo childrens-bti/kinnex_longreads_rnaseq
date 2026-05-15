@@ -46,3 +46,6 @@ manifests/*
 
 tests/
 summaries/
+params/
+run_data.sh
+mount_s3.sh

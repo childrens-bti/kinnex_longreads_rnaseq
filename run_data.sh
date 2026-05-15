@@ -13,7 +13,7 @@ cwltool \
 	--tmpdir-prefix ./.cwl-tmp/ \
 	--tmp-outdir-prefix ./.cwl-out/ \
 	--outdir outputs/lima_isoseq_test \
-	workflows/lima_isoseq_run.cwl \
+	tools/lima_isoseq.cwl \
 	params/lima_isoseq_test.yml
 
 ## test run for isoseq_refine workflow
@@ -79,8 +79,16 @@ cwltool \
 	kinnex_longreads.cwl \
 	params/kinnex_params.yml
 
+mkdir -p logs
+
+cwltool \
+	--leave-tmpdir \
+	--tmpdir-prefix ./.cwl-tmp/ \
+	--tmp-outdir-prefix ./.cwl-out/ \
+	--outdir outputs/multi_smrt_cells_example \
+	kinnex_longreads.cwl \
+	params/multiple_smrt_cells_example.yml 2>&1 | tee logs/multi_smrt_cells_example.log
 
 # deploy to Cavatica
-# cwltool --pack kinnex_longreads.cwl > sb.packed.cwl
 cwltool --validate kinnex_longreads.cwl
 sbpack cavatica childrens-bti/rokita-longread-rna-harmonization/kinnex-longreads /home/ubuntu/kinnex_longreads/kinnex_longreads.cwl

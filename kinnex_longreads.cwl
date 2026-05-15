@@ -38,7 +38,7 @@ doc: |
   - Comprehensive QC: Generates reports at each step for quality assessment
   
   Input Requirements:
-  - CAVATICA Naming: Set output_basename as projectid_taskid (e.g., SR009023_task001).
+  - CAVATICA Naming: Set output_basename as <project_id>_<task_id> (e.g., SR009023_task001).
     Per-SMRTcell prefix: output_basename.hifi_bam_basename
   - HiFi BAMs: Array of PacBio HiFi sequencing reads (one per SMRTcell)
   - Sample Manifest: TSV file mapping lima output filenames to Bioassay_IDs
@@ -67,18 +67,13 @@ requirements:
 
 inputs:
   # Primary inputs
-  project_id:
-    type: string
-    doc: |
-      Project identifier used for output naming.
-      On CAVATICA, this should normally be the PacBio project ID (e.g., SR009023).
-
   output_basename:
     type: string
     doc: |
-      Basename used as the run-level output prefix.
-      On CAVATICA, set this as projectid_taskid (e.g., SR009023_task001).
-      Final per-SMRTcell prefix: output_basename.hifi_bam_basename
+      Run-level output prefix for all generated files.
+      On CAVATICA, set this as <project_id>_<task_id> (e.g., SR009023_task001),
+      where project_id is the PacBio project ID and task_id is the CAVATICA task ID.
+      Per-SMRTcell outputs are further prefixed as: output_basename.<hifi_bam_basename>
   
   hifi_bams:
     type: File[]
@@ -272,14 +267,11 @@ steps:
       adapters_fa: adapters_fa
       lima_barcodes: lima_barcodes
       out_prefix:
-        source: [output_basename, project_id]
+        source: output_basename
         valueFrom: |
           ${
-            var output_basename = self[0];
-            var project_id = self[1];
-            // Create unique prefix for each SMRTcell
             var bam_name = inputs.hifi_bam.nameroot;
-            return output_basename + '.' + bam_name;
+            return self + '.' + bam_name;
           }
       skera_threads: skera_threads
       skera_use_dataset_xml: skera_use_dataset_xml
@@ -322,9 +314,7 @@ steps:
     run: tools/merge_demux_bams_by_barcode.cwl
     in:
       demux_bams: flatten_demux_bams/flattened
-      output_basename:
-        source: [project_id, output_basename]
-        valueFrom: $(self[0] + '.' + self[1])
+      output_basename: output_basename
       num_smrt_cells:
         source: hifi_bams
         valueFrom: $(self.length)

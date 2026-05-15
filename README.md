@@ -184,13 +184,11 @@ kinnex_longreads/
 ├── data/                    # Input data (S3 mounts)
 ├── manifests/               # Manifest files 
 ├── params/                  # Workflow parameter files
-│   ├── *_test.yml          # Test parameter files for each workflow
 │   ├── multiple_smrt_cells_example.yml
 │   └── kinnex_params.yml   # Main pipeline parameters
 ├── outputs/                 # Pipeline outputs
 ├── envs/                    # Conda environments
 │   └── cwl_env.yml
-├── run_data.sh              # Test execution scripts
 ├── kinnex_longreads.cwl     # Main workflow entry point
 ├── README.md
 └── LICENSE
@@ -210,222 +208,7 @@ After successful workflow completion, find these primary files in the selected `
 
 📋 For detailed outputs from each step, see [Pipeline Outputs](#-pipeline-outputs) section below.
 
-## 🚀 Running the Complete Pipeline
-
-### Prerequisites
-
-#### AWS & EC2 Setup
-- AWS CLI with SSO configuration ([setup guide](https://childrens-bti.github.io/bti-bfx-docs/aws/))
-- EC2 instance with sufficient resources (see [Resource Requirements](#resource-requirements))
-- Docker installed and running
-- Access to relevant S3 buckets
-
-#### Required Tools
-- `cwltool` - CWL workflow executor
-- `docker` - Container runtime
-- `mount-s3` - FUSE-based S3 mounting utility
-- `curl` - Data transfer utility
-
-#### FUSE Configuration for S3 Mounts
-
-Enable the `allow_other` option for FUSE to allow Docker access to S3 mounts.  
-**Edit `/etc/fuse.conf` and ensure this line is uncommented:**
-
-```bash
-sudo vim /etc/fuse.conf
-```
-
-Uncomment or add:
-```
-user_allow_other
-```
-
-This enables `mount-s3 --allow-other ...` functionality and allows Docker containers to access mounted S3 buckets.
-
-### Step-by-Step Execution on EC2
-
-#### 1. Environment Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/childrens-bti/kinnex_longreads.git
-cd kinnex_longreads
-
-# Create and activate the conda environment
-conda env create -f envs/cwl_env.yml
-conda activate cwl_env
-
-# Build the Docker container with all tools
-docker buildx build --platform linux/amd64 -t pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0 .
-```
-
-#### 2. Data Access from S3
-
-Mount your S3 bucket to `data/` to access input data:
-
-```bash
-# Mount S3 bucket containing HiFi reads
-bash mount_s3.sh your-bucket-name
-
-# Mount S3 bucket containing reference files
-bash mount_s3.sh bti-openaccess-us-east-1-prd-references
-
-# Verify data is accessible
-ls data/your-bucket-name/path-to-your-files
-ls data/bti-openaccess-us-east-1-prd-references/
-```
-
-#### 3. Configure Pipeline Parameters
-
-Edit `params/kinnex_params.yml` or start from `params/multiple_smrt_cells_example.yml` with your data paths:
-
-```bash
-nano params/multiple_smrt_cells_example.yml
-```
-
-**Required inputs to configure:**
-```yaml
-# CAVATICA naming convention: projectid_taskid
-project_id: "SR011156"
-output_basename: "SR011156_task001"
-
-# Input data - direct file specification, one BAM per SMRTcell
-hifi_bams:
-  - class: File
-    path: data/your-bucket-name/SMRTcell1/hifi_reads/sample_1.hifi_reads.bam
-    secondaryFiles:
-      - class: File
-        path: data/your-bucket-name/SMRTcell1/hifi_reads/sample_1.hifi_reads.bam.pbi
-  - class: File
-    path: data/your-bucket-name/SMRTcell2/hifi_reads/sample_2.hifi_reads.bam
-    secondaryFiles:
-      - class: File
-        path: data/your-bucket-name/SMRTcell2/hifi_reads/sample_2.hifi_reads.bam.pbi
-
-# Sample manifest mapping Lima barcode filenames to Bioassay IDs
-sample_manifest:
-  class: File
-  path: manifests/SR011156_barcode_manifest.tsv
-
-# Adapters for segmentation (Skera)
-adapters_fa:
-  class: File
-  path: data/references/mas8_primers.fasta
-
-# Barcoded primers for demultiplexing (Lima) - must have _5p/_3p suffixes
-lima_barcodes:
-  class: File
-  path: data/references/IsoSeq_v2_primers_12.fasta
-
-# Reference genome
-reference_fa:
-  class: File
-  path: data/reference/GRCh38.primary_assembly.genome.fa
-
-# Gene annotation
-annotation_gtf:
-  class: File
-  path: data/reference/gencode.v39.primary_assembly.annotation.gtf
-```
-
-The sample manifest must be a TSV with at least these columns:
-
-```tsv
-file_name	Bioassay_ID
-fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam	BA_SR11156_01
-fl.IsoSeqX_bc02_5p--IsoSeqX_3p.bam	BA_SR11156_02
-```
-
-**Optional parameters to tune:**
-```yaml
-# Thread settings (0 = auto-detect)
-# Tools will use these defaults if not specified:
-# - Cluster, Lima, PBMM2: 32 cores
-# - Other tools: 16 cores
-skera_threads: 0
-lima_threads: 0
-refine_threads: 0
-cluster_threads: 0
-pbmm2_threads: 0
-collapse_threads: 0
-classify_threads: 0
-filter_threads: 0
-
-# Resource requirements (automatically set)
-# - All tools: 64GB RAM minimum
-# - CPU cores scale with thread settings
-
-# Quality filtering
-refine_require_polya: true
-filter_min_cov: 3
-filter_polya_percent: 0.6
-```
-
-#### 4. Run the Complete Pipeline
-
-Execute the main workflow:
-
-```bash
-# Run with temp/output directory control
-cwltool \
-  --leave-tmpdir \
-  --tmpdir-prefix ./.cwl-tmp/ \
-  --tmp-outdir-prefix ./.cwl-out/ \
-  --outdir outputs/kinnex_output \
-  kinnex_longreads.cwl \
-  params/multiple_smrt_cells_example.yml
-```
-
-**Command options explained:**
-- `--leave-tmpdir`: Keep temporary files for debugging
-- `--tmpdir-prefix ./.cwl-tmp/`: Store temp files locally
-- `--tmp-outdir-prefix ./.cwl-out/`: Store intermediate outputs locally
-- `--outdir outputs/kinnex_output`: Final output directory
-
-
-#### 5. Test with Small Dataset and Check Individual Steps
-
-- Use 0.1% sampled hifi reads (~80k), bam file can be downloaded to data/
-```
-aws s3 cp s3://bti-openaccess-us-east-1-bti-bfx/kinnex_longreads/data/sampled_hifi_reads/ data/sampled_hifi_reads/ --recursive --profile YOUR-CNH-SSO-PROFILE
-```
-- Run subworkflows independently to isolate issues:
-
-```bash
-bash run_data.sh
-```
-
-##### Monitor Progress
-
-The pipeline executes the major stages below. Skera and Lima scatter over `hifi_bams`; downstream steps scatter over merged samples.
-
-| Step | Tool | Description | 0.1% Sample Runtime* |
-|------|------|-------------|---------------------|
-| 0 | Parse Manifest | Build barcode-to-Bioassay_ID mapping | <1 min |
-| 1 | Skera | Segment HiFi reads per SMRTcell | ~3 min per sampled BAM |
-| 2 | Lima | Demultiplex by barcodes per SMRTcell | ~10 min per sampled BAM |
-| 2b | Merge + Rename | Merge matching barcodes across SMRTcells, then insert Bioassay IDs | <5 min for sampled BAMs |
-| 3 | IsoSeq Refine | Trim & filter FLNC reads | ~1 min |
-| 4 | IsoSeq Cluster2 | Cluster into transcript models | ~12 min |
-| 5 | PBMM2 | Align transcripts to reference | ~5 min |
-| 6 | IsoSeq Collapse | Collapse into unique isoforms | <1 min |
-| 7 | Pigeon Classify | Classify against annotation | ~1 min |
-| 8 | Pigeon Filter & Report | Quality filter & reports | <1 min |
-
-**Total time for 0.1% sample:** ~35 minutes (6 barcodes, ~80k HiFi reads)
-
-*Based on actual run with 0.1% sampled HiFi reads (6 barcodes) on `m6i.4xlarge` EC2 instance (16 vCPUs, 64 GB RAM)  
-**Full dataset projection (100% = 1000x data): Roughly 10-15 hours** depending on dataset complexity and clustering efficiency (not all steps scale linearly). Recommend testing with 1% and 10% samples to calibrate runtime estimates for your specific data.
-
-#### 6. Output Collection
-
-**Important:** CWL only copies outputs to the final `--outdir` upon **successful workflow completion**. 
-
-- ✅ **During execution**: Intermediate outputs in `.cwl-out/*/` directories
-- ✅ **On success**: All declared outputs copied to the selected `--outdir`
-- ❌ **On failure**: Only completed steps' outputs may be in final directory
-
-### 📋 Input Data Requirements
+##  Input Data Requirements
 
 - **HiFi BAM files**: One or more high-fidelity consensus read BAMs in `hifi_bams`; use one entry per SMRTcell
 - **PacBio BAM index files**: `.pbi` files are recommended for HiFi BAM inputs and should be provided as secondary files when running locally
@@ -437,7 +220,7 @@ The pipeline executes the major stages below. Skera and Lima scatter over `hifi_
 
 **Note:** PacBio tools use `.pbi` indexes, not `.bai` indexes. If you create sampled BAMs manually, generate `.pbi` files with `pbindex`.
 
-### 📤 Pipeline Outputs
+## 📤 Pipeline Outputs
 
 All outputs are in the selected `--outdir` upon successful workflow completion.
 

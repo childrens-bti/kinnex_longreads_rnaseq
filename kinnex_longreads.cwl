@@ -1,6 +1,6 @@
 cwlVersion: v1.2
 class: Workflow
-label: Kinnex/MAS-Iso-Seq Complete Long-Read Pipeline with Multi-SMRTcell Support
+label: Kinnex/MAS-Iso-Seq Complete Long-Read Pipeline
 
 doc: |
   Complete end-to-end pipeline for PacBio Kinnex/MAS-Iso-Seq long-read transcriptome analysis
@@ -272,12 +272,14 @@ steps:
       adapters_fa: adapters_fa
       lima_barcodes: lima_barcodes
       out_prefix:
-        source: output_basename
+        source: [output_basename, project_id]
         valueFrom: |
           ${
+            var output_basename = self[0];
+            var project_id = self[1];
             // Create unique prefix for each SMRTcell
             var bam_name = inputs.hifi_bam.nameroot;
-            return self + '.' + bam_name;
+            return output_basename + '.' + bam_name;
           }
       skera_threads: skera_threads
       skera_use_dataset_xml: skera_use_dataset_xml
@@ -320,7 +322,9 @@ steps:
     run: tools/merge_demux_bams_by_barcode.cwl
     in:
       demux_bams: flatten_demux_bams/flattened
-      output_basename: output_basename
+      output_basename:
+        source: [project_id, output_basename]
+        valueFrom: $(self[0] + '.' + self[1])
       num_smrt_cells:
         source: hifi_bams
         valueFrom: $(self.length)

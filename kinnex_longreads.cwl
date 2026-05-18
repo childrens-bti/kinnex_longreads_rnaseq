@@ -126,7 +126,7 @@ inputs:
   # Skera options
   skera_threads:
     type: int?
-    default: 0
+    default: 24
   skera_use_dataset_xml:
     type: boolean?
     default: true
@@ -141,12 +141,12 @@ inputs:
       name: IsoSeq_v2_primers_12.fasta
   lima_threads:
     type: int?
-    default: 0
+    default: 36
   
   # Refine options
   refine_threads:
     type: int?
-    default: 0
+    default: 24
   refine_require_polya:
     type: boolean?
     default: true
@@ -154,7 +154,7 @@ inputs:
   # Cluster options
   cluster_threads:
     type: int?
-    default: 0
+    default: 36
   cluster_singletons:
     type: boolean?
     default: false
@@ -166,7 +166,7 @@ inputs:
   # PBMM2 options
   pbmm2_threads:
     type: int?
-    default: 0
+    default: 36
   pbmm2_preset:
     type: string?
     default: ISOSEQ
@@ -201,12 +201,12 @@ inputs:
     default: true
   collapse_threads:
     type: int?
-    default: 0
+    default: 24
   
   # Classify options
   classify_threads:
     type: int?
-    default: 0
+    default: 24
   classify_out_prefix_base:
     type: string?
     default: "pigeon"
@@ -233,7 +233,7 @@ inputs:
     default: false
   filter_threads:
     type: int?
-    default: 0
+    default: 24
   
   # Report options
   report_sub_sample_increment:
@@ -244,7 +244,7 @@ inputs:
     default: false
   report_threads:
     type: int?
-    default: 0
+    default: 12
   
   # General options
   log_level:
@@ -281,39 +281,24 @@ steps:
     scatterMethod: dotproduct
     out: [segmented_bam, demux_bams, lima_counts, lima_report, lima_summary]
 
-  # Flatten demux_bams from scatter (File[][] → File[])
-  flatten_demux_bams:
-    run:
-      class: ExpressionTool
-      requirements:
-        InlineJavascriptRequirement: {}
-      inputs:
-        demux_arrays:
-          type:
-            type: array
-            items:
-              type: array
-              items: File
-      outputs:
-        flattened:
-          type: File[]
-      expression: |
-        ${
-          var flat = [];
-          for (var i = 0; i < inputs.demux_arrays.length; i++)
-            for (var j = 0; j < inputs.demux_arrays[i].length; j++)
-              flat.push(inputs.demux_arrays[i][j]);
-          return { "flattened": flat };
-        }
-    in:
-      demux_arrays: skera_lima_scatter/demux_bams
-    out: [flattened]
-
   # Step 2b: Merge demultiplexed BAMs by barcode across SMRTcells
   merge_demux_bams:
     run: tools/merge_demux_bams_by_barcode.cwl
     in:
-      demux_bams: flatten_demux_bams/flattened
+      demux_bams:
+        source: skera_lima_scatter/demux_bams
+        valueFrom: |
+          ${
+            var flat = [];
+            for (var i = 0; i < self.length; i++) {
+              if (self[i]) {
+                for (var j = 0; j < self[i].length; j++) {
+                  flat.push(self[i][j]);
+                }
+              }
+            }
+            return flat;
+          }
       output_basename: output_basename
       num_smrt_cells:
         source: hifi_bams
@@ -586,7 +571,7 @@ $namespaces:
   sbg: "https://sevenbridges.com/"
 hints:
 - class: "sbg:maxNumberOfParallelInstances"
-  value: 2
+  value: 4
 "sbg:links":
 - id: "https://github.com/childrens-bti/kinnex_longreads/releases/tag/v1.1.0"
   label: github-release

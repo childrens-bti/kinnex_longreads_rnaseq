@@ -25,7 +25,12 @@ barcode_groups = defaultdict(list)
 for bam_path in all_bams:
     if not bam_path.strip():
         continue
-    match = re.search(r'(bc\d+)', os.path.basename(bam_path))
+    bam_name = os.path.basename(bam_path)
+    # Parse barcode from the demux token first (fl.<token>.bam) to avoid
+    # accidental matches from run prefixes/UUIDs containing bc<digits>.
+    fl_match = re.search(r'fl\.(.+?)\.bam', bam_name)
+    search_space = fl_match.group(1) if fl_match else bam_name
+    match = re.search(r'(bc\d+)', search_space)
     if not match:
         print(f"Warning: Could not extract barcode from {bam_path}", file=sys.stderr)
         continue

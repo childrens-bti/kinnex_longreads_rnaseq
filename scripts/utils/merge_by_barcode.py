@@ -49,6 +49,11 @@ for barcode_key in sorted(barcode_groups.keys()):
 
     output_file = f"{output_basename}.fl.{full_barcode}.merged.bam"
 
+    if len(bam_list) == 1:
+        print(f"Single SMRTcell for {barcode_key}, copying {bam_list[0]} -> {output_file}...", file=sys.stderr)
+        subprocess.run(["cp", bam_list[0], output_file], check=True)
+        continue
+
     cmd = ["samtools", "merge"]
     if threads > 0:
         cmd.extend(["-@", str(threads)])

@@ -322,6 +322,7 @@ steps:
         source: hifi_bams
         valueFrom: $(self.length)
       threads: merge_bams_threads
+      merge_bams_ram_gb: merge_bams_ram_gb
     requirements:
       - class: ResourceRequirement
         ramMin: $(inputs.merge_bams_ram_gb * 1024)

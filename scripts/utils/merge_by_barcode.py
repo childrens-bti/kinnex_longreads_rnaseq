@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Merge demultiplexed BAMs from multiple SMRTcells by barcode.
+Merge demultiplexed BAMs from multiple SMRTcells by barcode using sambamba for fast merging.
 
 Usage:
     python3 merge_by_barcode.py <bam_list_csv> <output_basename> <num_smrt_cells> [threads]
@@ -8,6 +8,11 @@ Usage:
 Output filenames:
     <output_basename>.fl.<full_barcode>.merged.bam
     (BA prefix added downstream by rename_bams_with_bioassay_id)
+
+Notes:
+    - Uses sambamba merge (https://lomereiter.github.io/sambamba/docs/sambamba-merge.html)
+    - Threads are passed to sambamba with -t
+    - For single SMRTcell, files are copied directly
 """
 import os
 import sys
@@ -54,15 +59,17 @@ for barcode_key in sorted(barcode_groups.keys()):
         subprocess.run(["cp", bam_list[0], output_file], check=True)
         continue
 
-    cmd = ["samtools", "merge"]
+
+    # Use sambamba merge for faster performance
+    cmd = ["sambamba", "merge"]
     if threads > 0:
-        cmd.extend(["-@", str(threads)])
+        cmd.extend(["-t", str(threads)])
     cmd += [output_file] + bam_list
 
-    print(f"Merging {len(bam_list)} BAMs for {barcode_key} -> {output_file}...", file=sys.stderr)
+    print(f"Merging {len(bam_list)} BAMs for {barcode_key} -> {output_file} using sambamba...", file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"Error merging {barcode_key}: {result.stderr}", file=sys.stderr)
+        print(f"Error merging {barcode_key} with sambamba: {result.stderr}", file=sys.stderr)
         sys.exit(1)
 
 print("Merge complete", file=sys.stderr)

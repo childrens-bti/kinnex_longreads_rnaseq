@@ -142,11 +142,22 @@ inputs:
   lima_threads:
     type: int?
     default: 36
+  lima_ram_gb:
+    type: int?
+    default: 32
   
   # Refine options
   refine_threads:
     type: int?
     default: 24
+
+  # Merge BAMs options
+  merge_bams_threads:
+    type: int?
+    default: 24
+  merge_bams_ram_gb:
+    type: int?
+    default: 48
   refine_require_polya:
     type: boolean?
     default: true
@@ -155,6 +166,9 @@ inputs:
   cluster_threads:
     type: int?
     default: 36
+  cluster_ram_gb:
+    type: int?
+    default: 48
   cluster_singletons:
     type: boolean?
     default: false
@@ -279,6 +293,9 @@ steps:
       log_level: log_level
     scatter: hifi_bam
     scatterMethod: dotproduct
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.lima_ram_gb * 1024)
     out: [segmented_bam, demux_bams, lima_counts, lima_report, lima_summary]
 
   # Step 2b: Merge demultiplexed BAMs by barcode across SMRTcells
@@ -303,7 +320,10 @@ steps:
       num_smrt_cells:
         source: hifi_bams
         valueFrom: $(self.length)
-      threads: refine_threads
+      threads: merge_bams_threads
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.merge_bams_ram_gb * 1024)
     out: [merged_bams]
 
   # Step 2c: Rename merged BAMs with Bioassay IDs
@@ -338,7 +358,9 @@ steps:
       log_level: log_level
       singletons: cluster_singletons
       write_bam: cluster_write_bam
-
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.cluster_ram_gb * 1024)
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
   # Step 5: Align transcripts to reference (scatter across samples)

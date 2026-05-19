@@ -23,6 +23,11 @@ inputs:
     default: false
     doc: If true, write annotated BAM file
 
+  cluster_ram_gb:
+    type: int?
+    default: 48
+    doc: RAM in GB for ResourceRequirement (set by parent workflow)
+
 steps:
   cluster_each:
     run: ../tools/isoseq_cluster2.cwl

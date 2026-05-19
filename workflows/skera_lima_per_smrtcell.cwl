@@ -50,6 +50,11 @@ inputs:
     type: string?
     default: INFO
 
+  lima_ram_gb:
+    type: int?
+    default: 32
+    doc: RAM in GB for ResourceRequirement (set by parent workflow)
+
 steps:
   skera:
     run: ../tools/skera_split.cwl

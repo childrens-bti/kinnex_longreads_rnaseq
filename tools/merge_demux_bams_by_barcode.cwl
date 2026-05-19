@@ -57,6 +57,11 @@ inputs:
     default: 0
     doc: Number of threads for samtools merge
 
+  merge_bams_ram_gb:
+    type: int?
+    default: 48
+    doc: RAM in GB for ResourceRequirement (set by parent workflow)
+
 baseCommand: [python3, /scripts/utils/merge_by_barcode.py]
 
 arguments:

@@ -291,6 +291,7 @@ steps:
       skera_use_dataset_xml: skera_use_dataset_xml
       lima_threads: lima_threads
       log_level: log_level
+      lima_ram_gb: lima_ram_gb
     scatter: hifi_bam
     scatterMethod: dotproduct
     requirements:
@@ -358,6 +359,7 @@ steps:
       log_level: log_level
       singletons: cluster_singletons
       write_bam: cluster_write_bam
+      cluster_ram_gb: cluster_ram_gb
     requirements:
       - class: ResourceRequirement
         ramMin: $(inputs.cluster_ram_gb * 1024)

@@ -7,7 +7,7 @@ doc: |
   Merge demultiplexed BAM files from multiple SMRTcells by matching barcode names.
   
   This tool reorganizes a flat list of demux BAMs from multiple SMRTcells and merges
-  BAMs with matching barcode names using sambamba for fast merging.
+  BAMs with matching barcode names using samtools merge.
   
   Assumptions:
   - All BAM filenames contain a barcode identifier (e.g., "bc01", "bc02")
@@ -28,9 +28,8 @@ doc: |
   (BA_XXXXX inserted after output_basename downstream by rename_bams_with_bioassay_id)
   
   Notes:
-  - Uses sambamba merge (https://lomereiter.github.io/sambamba/docs/sambamba-merge.html)
-  - Threads are passed to sambamba with -t
-  - Each input is name-sorted with sambamba before merge to avoid sort-order header conflicts
+  - Uses samtools merge; no pre-sorting required
+  - Threads are passed to samtools with -@
   - For single SMRTcell, files are copied directly
 
 requirements:

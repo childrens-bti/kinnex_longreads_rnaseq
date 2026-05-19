@@ -30,6 +30,7 @@ doc: |
   Notes:
   - Uses sambamba merge (https://lomereiter.github.io/sambamba/docs/sambamba-merge.html)
   - Threads are passed to sambamba with -t
+  - Each input is name-sorted with sambamba before merge to avoid sort-order header conflicts
   - For single SMRTcell, files are copied directly
 
 requirements:

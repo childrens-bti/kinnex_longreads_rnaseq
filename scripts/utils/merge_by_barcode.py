@@ -12,6 +12,8 @@ Output filenames:
 Notes:
     - Uses sambamba merge (https://lomereiter.github.io/sambamba/docs/sambamba-merge.html)
     - Threads are passed to sambamba with -t
+        - Name-sorts each input with sambamba sort before merge to avoid header
+            sort-order mismatches
     - For single SMRTcell, files are copied directly
 """
 import os
@@ -59,17 +61,38 @@ for barcode_key in sorted(barcode_groups.keys()):
         subprocess.run(["cp", bam_list[0], output_file], check=True)
         continue
 
+    print(
+        f"Sorting {len(bam_list)} BAMs for {barcode_key} with sambamba sort (name sort) before merge...",
+        file=sys.stderr,
+    )
+    sorted_bams = []
+    for idx, in_bam in enumerate(bam_list):
+        sort_out = f"{barcode_key}.{idx}.namesorted.bam"
+        sort_cmd = ["sambamba", "sort"]
+        if threads > 0:
+            sort_cmd.extend(["-t", str(threads)])
+        sort_cmd.extend(["-n", "-o", sort_out, in_bam])
+        sort_result = subprocess.run(sort_cmd, capture_output=True, text=True)
+        if sort_result.returncode != 0:
+            print(
+                f"Error sorting {in_bam} for {barcode_key}: {sort_result.stderr}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        sorted_bams.append(sort_out)
 
-    # Use sambamba merge for faster performance
-    cmd = ["sambamba", "merge"]
+    merge_cmd = ["sambamba", "merge"]
     if threads > 0:
-        cmd.extend(["-t", str(threads)])
-    cmd += [output_file] + bam_list
+        merge_cmd.extend(["-t", str(threads)])
+    merge_cmd += [output_file] + sorted_bams
 
-    print(f"Merging {len(bam_list)} BAMs for {barcode_key} -> {output_file} using sambamba...", file=sys.stderr)
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Error merging {barcode_key} with sambamba: {result.stderr}", file=sys.stderr)
+    print(
+        f"Merging {len(sorted_bams)} name-sorted BAMs for {barcode_key} -> {output_file} using sambamba...",
+        file=sys.stderr,
+    )
+    merge_result = subprocess.run(merge_cmd, capture_output=True, text=True)
+    if merge_result.returncode != 0:
+        print(f"Error merging {barcode_key} with sambamba: {merge_result.stderr}", file=sys.stderr)
         sys.exit(1)
 
 print("Merge complete", file=sys.stderr)

@@ -25,11 +25,13 @@ RUN conda config --system --add channels conda-forge \
     && conda config --system --add channels bioconda \
     && conda config --system --set channel_priority strict
 
+
 # Install stacks with mamba (single transaction) and clean caches
 RUN mamba install -y \
         python=3.12 \
         pbmm2 lima isoseq pbccs pbjasmine pbpigeon \
         pbskera samtools bcftools htslib \
+        sambamba \
         pandas numpy scipy \
         r-base \
         pandoc \

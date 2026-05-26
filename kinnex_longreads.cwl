@@ -3,15 +3,25 @@ class: Workflow
 label: Kinnex/MAS-Iso-Seq Complete Long-Read Pipeline
 
 doc: |
-  Complete end-to-end pipeline for PacBio Kinnex/MAS-Iso-Seq long-read transcriptome analysis.
+  Complete end-to-end pipeline for PacBio Kinnex/MAS-Iso-Seq long-read transcriptome analysis
+  with multi-SMRTcell support for resource-efficient processing.
   
   This workflow processes PacBio HiFi reads through a comprehensive isoform discovery and 
   characterization pipeline, integrating bioassay ID tracking for sample provenance.
+  
+  Multi-SMRTcell Strategy (Resource-Efficient):
+  When processing the same Kinnex library run on multiple SMRTcells:
+  1. Process each SMRTcell independently through Skera & Lima (avoids merging huge files)
+  2. Merge only the small per-barcode demultiplexed BAMs from each SMRTcell
+  3. Continue downstream with merged per-sample BAMs
+  
+  This approach uses ~10x less disk space than upfront merging for 70GB+ BAMs.
   
   Pipeline Steps:
   0. Parse Manifest: Extract barcode-to-Bioassay_ID mappings from TSV manifest (required)
   1. Skera: Segment HiFi reads containing multiple transcripts into individual molecules
   2. Lima: Demultiplex segmented reads by barcodes and apply Bioassay ID prefixes
+  2b. Merge Demultiplexed: Merge per-barcode BAMs across SMRTcells (small files)
   3. IsoSeq Refine: Trim polyA tails and filter full-length non-concatemer (FLNC) reads
   4. IsoSeq Cluster2: Cluster FLNC reads into consensus transcript models
   5. PBMM2: Align transcript models to reference genome using minimap2
@@ -23,11 +33,14 @@ doc: |
   - Bioassay ID Integration: All outputs are prefixed with stable sample identifiers (BA_XXXXX)
     for traceability and downstream data integration
   - Barcode Preservation: Original barcode names are maintained in filenames alongside BA_IDs
+  - Multi-SMRTcell Efficiency: Processes separate BAMs independently, merges only demultiplexed files
   - Scatter Parallelization: Steps 3-8 process samples in parallel for efficiency
   - Comprehensive QC: Generates reports at each step for quality assessment
   
   Input Requirements:
-  - HiFi BAM: PacBio HiFi sequencing reads (with optional .pbi index)
+  - CAVATICA Naming: Set output_basename as <project_id>_<task_id> (e.g., SR009023_task001).
+    Per-SMRTcell prefix: output_basename.hifi_bam_basename
+  - HiFi BAMs: Array of PacBio HiFi sequencing reads (one per SMRTcell)
   - Sample Manifest: TSV file mapping lima output filenames to Bioassay_IDs
     Required columns: file_name, Bioassay_ID
     Example: fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam -> BA_9B3T9910
@@ -36,7 +49,8 @@ doc: |
   Output Naming Convention:
   All outputs follow the pattern: BA_<ID>.<step>.<barcode>.<suffix>
   Example progression:
-  - Lima:     BA_9B3T9910.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
+  - Lima:     BA_9B3T9910.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam (from SMRTcell1)
+  - Merged:   BA_9B3T9910.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.merged.bam (SMRTcell1+2)
   - Refine:   BA_9B3T9910.flnc.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
   - Cluster:  BA_9B3T9910.clustered.IsoSeqX_bc01_5p--IsoSeqX_3p.transcripts.bam
   - Align:    BA_9B3T9910.mapped.IsoSeqX_bc01_5p--IsoSeqX_3p.bam
@@ -47,19 +61,35 @@ doc: |
 
 requirements:
   SubworkflowFeatureRequirement: {}
+  ScatterFeatureRequirement: {}
   StepInputExpressionRequirement: {}
   InlineJavascriptRequirement: {}
 
 inputs:
   # Primary inputs
-  project_name:
+  output_basename:
     type: string
     doc: |
-      Output prefix for segmented files and lima reports and embedded in all output filenames. 
-      Specify a unique project name/ID to avoid file collisions (e.g., PROJECT123, SR009023_Kinnex).
-  hifi_bam:
-    type: File
-    doc: HiFi BAM file containing reads to segment
+      Run-level output prefix for all generated files.
+      On CAVATICA, set this as <project_id>_<task_id> (e.g., SR009023_task001),
+      where project_id is the PacBio project ID and task_id is the CAVATICA task ID.
+      Per-SMRTcell outputs are further prefixed as: output_basename.<hifi_bam_basename>
+  
+  hifi_bams:
+    type: File[]
+    doc: |
+      Array of HiFi BAM files to process. Provide one per SMRTcell.
+      
+      For single SMRTcell: [single.bam]
+      For multiple SMRTcells (resource-efficient merging after demultiplexing):
+        [smrt_cell1.bam, smrt_cell2.bam]
+      
+      When multiple BAMs provided:
+      - Each is processed independently through Skera & Lima
+      - Per-barcode outputs are then merged by barcode name
+      - This avoids merging huge undemultiplexed files
+      - Number of SMRTcells is auto-detected from this array length
+
     secondaryFiles:
       - required: false
         pattern: .pbi
@@ -96,7 +126,7 @@ inputs:
   # Skera options
   skera_threads:
     type: int?
-    default: 0
+    default: 24
   skera_use_dataset_xml:
     type: boolean?
     default: true
@@ -111,12 +141,23 @@ inputs:
       name: IsoSeq_v2_primers_12.fasta
   lima_threads:
     type: int?
-    default: 0
+    default: 36
+  lima_ram_gb:
+    type: int?
+    default: 32
   
   # Refine options
   refine_threads:
     type: int?
-    default: 0
+    default: 24
+
+  # Merge BAMs options
+  merge_bams_threads:
+    type: int?
+    default: 24
+  merge_bams_ram_gb:
+    type: int?
+    default: 48
   refine_require_polya:
     type: boolean?
     default: true
@@ -124,7 +165,10 @@ inputs:
   # Cluster options
   cluster_threads:
     type: int?
-    default: 0
+    default: 36
+  cluster_ram_gb:
+    type: int?
+    default: 48
   cluster_singletons:
     type: boolean?
     default: false
@@ -136,7 +180,7 @@ inputs:
   # PBMM2 options
   pbmm2_threads:
     type: int?
-    default: 0
+    default: 36
   pbmm2_preset:
     type: string?
     default: ISOSEQ
@@ -171,12 +215,12 @@ inputs:
     default: true
   collapse_threads:
     type: int?
-    default: 0
+    default: 24
   
   # Classify options
   classify_threads:
     type: int?
-    default: 0
+    default: 24
   classify_out_prefix_base:
     type: string?
     default: "pigeon"
@@ -203,7 +247,7 @@ inputs:
     default: false
   filter_threads:
     type: int?
-    default: 0
+    default: 24
   
   # Report options
   report_sub_sample_increment:
@@ -214,7 +258,7 @@ inputs:
     default: false
   report_threads:
     type: int?
-    default: 0
+    default: 12
   
   # General options
   log_level:
@@ -229,36 +273,75 @@ steps:
       manifest: sample_manifest
     out: [barcode_mapping]
 
-  # Step 1: Segment HiFi reads
-  skera:
-    run: workflows/skera.cwl
+  # Step 1-2: Process each SMRTcell independently (Skera + Lima scatter)
+  skera_lima_scatter:
+    run: workflows/skera_lima_per_smrtcell.cwl
     in:
-      hifi_bam: hifi_bam
+      hifi_bam: hifi_bams
       adapters_fa: adapters_fa
-      out_prefix: project_name
-      threads: skera_threads
-      use_dataset_xml: skera_use_dataset_xml
+      lima_barcodes: lima_barcodes
+      out_prefix:
+        source: output_basename
+        valueFrom: |
+          ${
+            var bam_name = inputs.hifi_bam.nameroot;
+            return self + '.' + bam_name;
+          }
+      skera_threads: skera_threads
+      skera_use_dataset_xml: skera_use_dataset_xml
+      lima_threads: lima_threads
       log_level: log_level
-    out: [segmented_bam, non_passing_bam, segmented_dataset, summary_csv, ligations_csv, read_lengths_csv, adapters_csv_gz]
+      lima_ram_gb: lima_ram_gb
+    scatter: hifi_bam
+    scatterMethod: dotproduct
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.lima_ram_gb * 1024)
+    out: [segmented_bam, demux_bams, lima_counts, lima_report, lima_summary]
 
-  # Step 2: Demultiplex by barcodes
-  lima:
-    run: workflows/lima_isoseq_run.cwl
+  # Step 2b: Merge demultiplexed BAMs by barcode across SMRTcells
+  merge_demux_bams:
+    run: tools/merge_demux_bams_by_barcode.cwl
     in:
-      in_dataset: skera/segmented_bam
-      barcodes: lima_barcodes
-      barcode_mapping: parse_manifest/barcode_mapping
-      out_prefix: project_name
-      threads: lima_threads
-      log_level: log_level
-    out: [out_dataset, demux_bams, counts, report, summary]
+      demux_bams:
+        source: skera_lima_scatter/demux_bams
+        valueFrom: |
+          ${
+            var flat = [];
+            for (var i = 0; i < self.length; i++) {
+              if (self[i]) {
+                for (var j = 0; j < self[i].length; j++) {
+                  flat.push(self[i][j]);
+                }
+              }
+            }
+            return flat;
+          }
+      output_basename: output_basename
+      num_smrt_cells:
+        source: hifi_bams
+        valueFrom: $(self.length)
+      threads: merge_bams_threads
+      merge_bams_ram_gb: merge_bams_ram_gb
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.merge_bams_ram_gb * 1024)
+    out: [merged_bams]
 
-  # Step 3: Refine FLNC reads (scatter across barcodes)
+  # Step 2c: Rename merged BAMs with Bioassay IDs
+  rename_demux_bams:
+    run: tools/rename_bams_with_bioassay_id.cwl
+    in:
+      input_bams: merge_demux_bams/merged_bams
+      barcode_mapping: parse_manifest/barcode_mapping
+    out: [renamed_bams]
+
+  # Step 3: Refine FLNC reads (scatter across merged barcodes)
   refine:
     run: workflows/isoseq_refine_scatter.cwl
     in:
       demux_bams:
-        source: lima/demux_bams
+        source: rename_demux_bams/renamed_bams
         valueFrom: $(self)
       barcodes: lima_barcodes
       threads: refine_threads
@@ -277,7 +360,10 @@ steps:
       log_level: log_level
       singletons: cluster_singletons
       write_bam: cluster_write_bam
-
+      cluster_ram_gb: cluster_ram_gb
+    requirements:
+      - class: ResourceRequirement
+        ramMin: $(inputs.cluster_ram_gb * 1024)
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
   # Step 5: Align transcripts to reference (scatter across samples)
@@ -350,45 +436,48 @@ steps:
     out: [filtered_classification_txts, filtered_junctions_txts, filtered_reasons_txts, filtered_gffs, filtered_report_jsons, filtered_summary_txts, saturation_txts]
 
 outputs:
-  # Skera outputs
-  segmented_bam:
-    type: File
-    outputSource: skera/segmented_bam
-  segmented_summary:
-    type: File?
-    outputSource: skera/summary_csv
-  non_passing_bam:
-    type: File
-    outputSource: skera/non_passing_bam
-  segmented_dataset:
-    type: File?
-    outputSource: skera/segmented_dataset
-  ligations_csv:
-    type: File?
-    outputSource: skera/ligations_csv
-  read_lengths_csv:
-    type: File?
-    outputSource: skera/read_lengths_csv
-  adapters_csv_gz:
-    type: File?
-    outputSource: skera/adapters_csv_gz
-  
-  # Lima outputs
-  lima_out_dataset:
-    type: File
-    outputSource: lima/out_dataset
-  demux_bams:
+  # Skera outputs (from scatter)
+  segmented_bams:
     type: File[]
-    outputSource: lima/demux_bams
+    outputSource: skera_lima_scatter/segmented_bam
+    doc: Segmented BAMs from each SMRTcell
+  
+  # Lima outputs (from scatter, before merging)
+  demux_bams_per_cell:
+    type:
+      type: array
+      items:
+        type: array
+        items: File
+    outputSource: skera_lima_scatter/demux_bams
+    doc: Per-barcode demultiplexed BAMs from each SMRTcell
+  
   lima_counts:
-    type: File?
-    outputSource: lima/counts
+    type:
+      type: array
+      items: ["null", File]
+    outputSource: skera_lima_scatter/lima_counts
+    doc: Lima demultiplexing count reports from each SMRTcell
+  
   lima_report:
-    type: File?
-    outputSource: lima/report
+    type:
+      type: array
+      items: ["null", File]
+    outputSource: skera_lima_scatter/lima_report
+    doc: Lima demultiplexing reports from each SMRTcell
+  
   lima_summary:
-    type: File?
-    outputSource: lima/summary
+    type:
+      type: array
+      items: ["null", File]
+    outputSource: skera_lima_scatter/lima_summary
+    doc: Lima demultiplexing summaries from each SMRTcell
+  
+  # Merged demultiplexed BAMs (one per barcode)
+  merged_demux_bams:
+    type: File[]
+    outputSource: rename_demux_bams/renamed_bams
+    doc: Demultiplexed BAMs merged by barcode across all SMRTcells, renamed with Bioassay IDs
   
   # Refine outputs
   flnc_bams:
@@ -507,7 +596,7 @@ $namespaces:
   sbg: "https://sevenbridges.com/"
 hints:
 - class: "sbg:maxNumberOfParallelInstances"
-  value: 2
+  value: 4
 "sbg:links":
-- id: "https://github.com/childrens-bti/kinnex_longreads/tree/feat/workflow_sketch" # will update with stable release
+- id: "https://github.com/childrens-bti/kinnex_longreads/releases/tag/v1.1.0"
   label: github-release

@@ -2,29 +2,25 @@
 
 This repository contains a comprehensive CWL-based workflow for processing Kinnex/MAS-Iso-Seq long-read sequencing data. The pipeline implements the complete PacBio Iso-Seq workflow from HiFi reads to final isoform characterization using open-source tools.
 
-## ✨ Recent Updates (November 2025)
-
-**Major architectural improvements for Cavatica compatibility:**
-
-- ✅ **Eliminated Directory.listing dependencies**: Converted all scatter workflows to pass File arrays directly instead of using Directory objects with pattern matching, resolving Cavatica "Failed to transform inputs" errors
-- ✅ **Streamlined secondary file handling**: Consolidated `.pbi` index files as secondary files on BAM outputs, removing redundant output parameters
-- ✅ **Added resource requirements**: All tools now specify CPU (16-32 cores) and RAM (64GB) requirements for proper Cavatica instance provisioning
-- ✅ **Removed unused tools**: Eliminated `list_files_by_pattern.cwl` and `create_output_directory.cwl` as they're no longer needed
-- ✅ **Improved type safety**: Fixed optional vs required type mismatches between workflow steps to eliminate CWL validation warnings
-
-**Key architectural changes:**
-- Input type change: `hifi_dir` (Directory) → `hifi_bam` (File) for direct file specification
-- Removed 7 pattern input parameters (no longer needed for file filtering)
-- Removed 5 intermediate directory creation steps from main workflow
-- All 6 scatter workflows now accept File arrays directly
-
 ## 🔬 Pipeline Overview
 
 The Kinnex/MAS-Iso-Seq pipeline processes long-read sequencing data through several key steps to identify and quantify transcript isoforms. All tools are available through PacBio's bioconda channel: [pbbioconda](https://github.com/PacificBiosciences/pbbioconda).
 
+### Multi-SMRTcell Strategy
+
+For one Kinnex library sequenced across multiple SMRTcells, the workflow avoids merging large raw HiFi BAMs. Instead, it:
+
+1. Scatters over `hifi_bams` and runs Skera + Lima once per SMRTcell
+2. Flattens the per-SMRTcell Lima outputs into one demux BAM list
+3. Merges matching barcodes across SMRTcells into `output_basename.fl.<barcode>.merged.bam`
+4. Inserts Bioassay IDs from `sample_manifest`, producing `output_basename.<Bioassay_ID>.fl.<barcode>.merged.bam`
+5. Continues through refine, cluster, align, collapse, classify, filter, and report per merged sample
+
+This keeps disk use much lower than upfront merging because only the smaller demultiplexed per-barcode BAMs are merged.
+
 ### 📊 Workflow Steps
 
-#### 1. **HiFi Reads Input(provided by PacBio)**
+#### 1. **HiFi Reads Input (provided by PacBio)**
 Starting point: High-fidelity consensus reads in BAM format
 
 <details>
@@ -164,31 +160,35 @@ kinnex_longreads/
 │   ├── isoseq_collapse.cwl  
 │   ├── isoseq_refine.cwl
 │   ├── lima_isoseq.cwl
+│   ├── merge_demux_bams_by_barcode.cwl
+│   ├── parse_manifest.cwl
 │   ├── pbmm2_align.cwl
 │   ├── pigeon_classify.cwl
 │   ├── pigeon_filter.cwl
 │   ├── pigeon_prepare.cwl
 │   ├── pigeon_report.cwl
+│   ├── rename_bams_with_bioassay_id.cwl
 │   └── skera_split.cwl
 ├── workflows/               # CWL workflows and subworkflows  
 │   ├── isoseq_cluster2_scatter.cwl
 │   ├── isoseq_collapse_scatter.cwl
 │   ├── isoseq_refine_scatter.cwl
-│   ├── lima_isoseq_run.cwl
 │   ├── pbmm2_align_scatter.cwl
 │   ├── pigeon_classify_scatter.cwl
 │   ├── pigeon_filter_report_scatter.cwl
-│   └── skera.cwl
-├── scripts/                 # Analysis scripts   
+│   └── skera_lima_per_smrtcell.cwl
+├── scripts/                 # Utility scripts copied into the Docker image
+│   └── utils/
+│       ├── merge_by_barcode.py
+│       └── rename_bams.py
 ├── data/                    # Input data (S3 mounts)
 ├── manifests/               # Manifest files 
 ├── params/                  # Workflow parameter files
-│   ├── *_test.yml          # Test parameter files for each workflow
+│   ├── multiple_smrt_cells_example.yml
 │   └── kinnex_params.yml   # Main pipeline parameters
 ├── outputs/                 # Pipeline outputs
 ├── envs/                    # Conda environments
 │   └── cwl_env.yml
-├── run_data.sh              # Test execution scripts
 ├── kinnex_longreads.cwl     # Main workflow entry point
 ├── README.md
 └── LICENSE
@@ -196,7 +196,7 @@ kinnex_longreads/
 
 ## 🎯 Quick Reference: Key Outputs
 
-After successful workflow completion, find these primary files in `outputs/kinnex_output/`:
+After successful workflow completion, find these primary files in the selected `--outdir`:
 
 | Output Type | Files | Description |
 |-------------|-------|-------------|
@@ -208,257 +208,85 @@ After successful workflow completion, find these primary files in `outputs/kinne
 
 📋 For detailed outputs from each step, see [Pipeline Outputs](#-pipeline-outputs) section below.
 
-## 🚀 Running the Complete Pipeline
+##  Input Data Requirements
 
-### Prerequisites
-
-#### AWS & EC2 Setup
-- AWS CLI with SSO configuration ([setup guide](https://childrens-bti.github.io/bti-bfx-docs/aws/))
-- EC2 instance with sufficient resources (see [Resource Requirements](#resource-requirements))
-- Docker installed and running
-- Access to relevant S3 buckets
-
-#### Required Tools
-- `cwltool` - CWL workflow executor
-- `docker` - Container runtime
-- `mount-s3` - FUSE-based S3 mounting utility
-- `curl` - Data transfer utility
-
-#### FUSE Configuration for S3 Mounts
-
-Enable the `allow_other` option for FUSE to allow Docker access to S3 mounts.  
-**Edit `/etc/fuse.conf` and ensure this line is uncommented:**
-
-```bash
-sudo vim /etc/fuse.conf
-```
-
-Uncomment or add:
-```
-user_allow_other
-```
-
-This enables `mount-s3 --allow-other ...` functionality and allows Docker containers to access mounted S3 buckets.
-
-### Step-by-Step Execution on EC2
-
-#### 1. Environment Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/childrens-bti/kinnex_longreads.git
-cd kinnex_longreads
-
-# Create and activate the conda environment
-conda env create -f envs/cwl_env.yml
-conda activate cwl_env
-
-# Build the Docker container with all tools
-docker buildx build --platform linux/amd64 -t pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0 .
-```
-
-#### 2. Data Access from S3
-
-Mount your S3 bucket to `data/` to access input data:
-
-```bash
-# Mount S3 bucket containing HiFi reads
-bash mount_s3.sh your-bucket-name
-
-# Mount S3 bucket containing reference files
-bash mount_s3.sh bti-openaccess-us-east-1-prd-references
-
-# Verify data is accessible
-ls data/your-bucket-name/path-to-your-files
-ls data/bti-openaccess-us-east-1-prd-references/
-```
-
-#### 3. Configure Pipeline Parameters
-
-Edit `params/main_params.yml` with your data paths:
-
-```bash
-nano params/main_params.yml
-```
-
-**Required inputs to configure:**
-```yaml
-# Input data - Direct file specification (not directory)
-hifi_bam:
-  class: File
-  path: data/your-bucket-name/path/to/m84091_250103_164424_s3.bc1001.bam
-
-# Adapters for segmentation (Skera)
-adapters_fa:
-  class: File
-  path: data/references/mas8_primers.fasta
-
-# Barcoded primers for demultiplexing (Lima) - must have _5p/_3p suffixes
-lima_barcodes:
-  class: File
-  path: data/references/IsoSeq_v2_primers_12.fasta
-
-# Reference genome
-reference_fa:
-  class: File
-  path: data/reference/GRCh38.primary_assembly.genome.fa
-
-# Gene annotation
-annotation_gtf:
-  class: File
-  path: data/reference/gencode.v39.primary_assembly.annotation.gtf
-```
-
-**Optional parameters to tune:**
-```yaml
-# Thread settings (0 = auto-detect)
-# Tools will use these defaults if not specified:
-# - Cluster, Lima, PBMM2: 32 cores
-# - Other tools: 16 cores
-skera_threads: 0
-lima_threads: 0
-refine_threads: 0
-cluster_threads: 0
-pbmm2_threads: 0
-collapse_threads: 0
-classify_threads: 0
-filter_threads: 0
-
-# Resource requirements (automatically set)
-# - All tools: 64GB RAM minimum
-# - CPU cores scale with thread settings
-
-# Quality filtering
-refine_require_polya: true
-filter_min_cov: 3
-filter_polya_percent: 0.6
-```
-
-#### 4. Run the Complete Pipeline
-
-Execute the main workflow:
-
-```bash
-# Run with temp/output directory control
-cwltool \
-  --leave-tmpdir \
-  --tmpdir-prefix ./.cwl-tmp/ \
-  --tmp-outdir-prefix ./.cwl-out/ \
-  --outdir outputs/kinnex_output \
-  kinnex_longreads.cwl \
-  params/kinnex_params.yml
-```
-
-**Command options explained:**
-- `--leave-tmpdir`: Keep temporary files for debugging
-- `--tmpdir-prefix ./.cwl-tmp/`: Store temp files locally
-- `--tmp-outdir-prefix ./.cwl-out/`: Store intermediate outputs locally
-- `--outdir outputs/kinnex_output`: Final output directory
-
-
-#### 5. Test with Small Dataset and Check Individual Steps
-
-- Use 0.1% sampled hifi reads (~80k), bam file can be downloaded to data/
-```
-aws s3 cp s3://bti-openaccess-us-east-1-bti-bfx/kinnex_longreads/data/sampled_hifi_reads/ data/sampled_hifi_reads/ --recursive --profile YOUR-CNH-SSO-PROFILE
-```
-- Run subworkflows independently to isolate issues:
-
-```bash
-bash run_data.sh
-```
-
-##### Monitor Progress
-
-The pipeline executes 14 major steps sequentially:
-
-| Step | Tool | Description | 0.1% Sample Runtime* |
-|------|------|-------------|---------------------|
-| 1 | Skera | Segment HiFi reads | ~3 min |
-| 2 | Lima | Demultiplex by barcodes | ~10 min |
-| 3 | IsoSeq Refine | Trim & filter FLNC reads | ~1 min |
-| 4 | IsoSeq Cluster2 | Cluster into transcript models | ~12 min |
-| 5 | PBMM2 | Align transcripts to reference | ~5 min |
-| 6 | IsoSeq Collapse | Collapse into unique isoforms | <1 min |
-| 7 | Pigeon Classify | Classify against annotation | ~1 min |
-| 8 | Pigeon Filter & Report | Quality filter & reports | <1 min |
-
-**Total time for 0.1% sample:** ~35 minutes (6 barcodes, ~80k HiFi reads)
-
-*Based on actual run with 0.1% sampled HiFi reads (6 barcodes) on `m6i.4xlarge` EC2 instance (16 vCPUs, 64 GB RAM)  
-**Full dataset projection (100% = 1000x data): Roughly 10-15 hours** depending on dataset complexity and clustering efficiency (not all steps scale linearly). Recommend testing with 1% and 10% samples to calibrate runtime estimates for your specific data.
-
-#### 6. Output Collection
-
-**Important:** CWL only copies outputs to the final `--outdir` upon **successful workflow completion**. 
-
-- ✅ **During execution**: Intermediate outputs in `.cwl-out/*/` directories
-- ✅ **On success**: All outputs copied to `outputs/kinnex_output/`
-- ❌ **On failure**: Only completed steps' outputs may be in final directory
-
-### 📋 Input Data Requirements
-
-- **HiFi BAM file**: Single high-fidelity consensus read file (`.bam` with optional `.pbi` index)
+- **HiFi BAM files**: One or more high-fidelity consensus read BAMs in `hifi_bams`; use one entry per SMRTcell
+- **PacBio BAM index files**: `.pbi` files are recommended for HiFi BAM inputs and should be provided as secondary files when running locally
+- **Sample manifest**: TSV with `file_name` and `Bioassay_ID` columns. `file_name` should match Lima-style names such as `fl.IsoSeqX_bc01_5p--IsoSeqX_3p.bam`
 - **Adapters FASTA** (Skera): Adapter sequences used for concatenation (e.g., `mas8_primers.fasta`)
 - **Barcodes FASTA** (Lima): Barcoded primers with `_5p` and `_3p` suffixes (e.g., `IsoSeq_v2_primers_12.fasta`)
 - **Reference genome**: Uncompressed FASTA
 - **Annotation GTF**: Standard GTF format for gene annotations (uncompressed)
 
-**Note:** All BAM files automatically include their `.pbi` index files as secondary files - no need to specify them separately.
+**Note:** PacBio tools use `.pbi` indexes, not `.bai` indexes. If you create sampled BAMs manually, generate `.pbi` files with `pbindex`.
 
-### 📤 Pipeline Outputs
+## 📤 Pipeline Outputs
 
-All outputs are in `outputs/kinnex_output/` upon successful workflow completion.
+All outputs are in the selected `--outdir` upon successful workflow completion.
 
 #### Step-by-Step Outputs
 
 <details>
 <summary><b>Step 1: Skera (Segmentation)</b></summary>
 
-- **`segmented.bam`** + `.pbi`: Successfully segmented reads
-- **`segmented.non_passing.bam`** + `.pbi`: Reads failing segmentation
-- **`segmented.consensusreadset.xml`**: Dataset XML (optional)
-- **`segmented.summary.csv`**: Segmentation statistics
-- **`segmented.ligations.csv`**: Ligation events
-- **`segmented.read_lengths.csv`**: Read length distributions
-- **`segmented.found_adapters.csv.gz`**: Adapter detection details
+- **`<output_basename>.<smrtcell>.segmented.bam`** + `.pbi`: Successfully segmented reads
+- **`<output_basename>.<smrtcell>.segmented.non_passing.bam`** + `.pbi`: Reads failing segmentation
+- **`<output_basename>.<smrtcell>.segmented.consensusreadset.xml`**: Dataset XML (optional)
+- **`<output_basename>.<smrtcell>.segmented.summary.csv`**: Segmentation statistics
+- **`<output_basename>.<smrtcell>.segmented.ligations.csv`**: Ligation events
+- **`<output_basename>.<smrtcell>.segmented.read_lengths.csv`**: Read length distributions
+- **`<output_basename>.<smrtcell>.segmented.found_adapters.csv.gz`**: Adapter detection details
 
 </details>
 
 <details>
 <summary><b>Step 2: Lima (Demultiplexing)</b></summary>
 
-- **`fl.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`** + `.pbi`: Per-barcode demultiplexed BAMs
-- **`fl.consensusreadset.xml`**: Lima output dataset XML
-- **`fl.lima.counts`**: Read counts per barcode
-- **`fl.lima.report`**: Detailed demultiplexing report
-- **`fl.lima.summary`**: Summary statistics
-- **`lima-isoseq.log`**: Lima execution log
+- **`<output_basename>.<smrtcell>.fl.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`** + `.pbi`: Per-SMRTcell, per-barcode demultiplexed BAMs
+- **`<output_basename>.<smrtcell>.fl.consensusreadset.xml`**: Lima output dataset XML
+- **`<output_basename>.<smrtcell>.fl.lima.counts`**: Read counts per barcode
+- **`<output_basename>.<smrtcell>.fl.lima.report`**: Detailed demultiplexing report
+- **`<output_basename>.<smrtcell>.fl.lima.summary`**: Summary statistics
+- **`<output_basename>.<smrtcell>.fl.lima-isoseq.log`**: Lima execution log
+
+</details>
+
+<details>
+<summary><b>Step 2b: Merge + Bioassay ID Rename</b></summary>
+
+- **`<output_basename>.fl.IsoSeqX_bc##_5p--IsoSeqX_3p.merged.bam`**: Barcode-matched BAM merged across all SMRTcells
+- **`<output_basename>.<Bioassay_ID>.fl.IsoSeqX_bc##_5p--IsoSeqX_3p.merged.bam`**: Final merged demux BAM after Bioassay ID insertion
+
+Example:
+
+```text
+SR011156_task001.BA_SR11156_01.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.merged.bam
+```
 
 </details>
 
 <details>
 <summary><b>Step 3: IsoSeq Refine (FLNC Filtering)</b></summary>
 
-- **`flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`** + `.pbi`: Full-length non-concatemer reads per barcode
-- **`flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.filter_summary.json`**: Filtering statistics
-- **`flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.report.csv`**: Per-barcode quality metrics
+- **`<output_basename>.<Bioassay_ID>.flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`** + `.pbi`: Full-length non-concatemer reads per barcode
+- **`<output_basename>.<Bioassay_ID>.flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.filter_summary.json`**: Filtering statistics
+- **`<output_basename>.<Bioassay_ID>.flnc.IsoSeqX_bc##_5p--IsoSeqX_3p.report.csv`**: Per-barcode quality metrics
 
 </details>
 
 <details>
 <summary><b>Step 4: IsoSeq Cluster2 (Clustering)</b></summary>
 
-- **`clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.bam`** + `.pbi`: Consensus transcript sequences per sample
-- **`clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.cluster_report.csv`**: Clustering statistics
-- **`clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.singletons.bam`**: Singleton reads (if enabled)
+- **`<output_basename>.<Bioassay_ID>.clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.bam`** + `.pbi`: Consensus transcript sequences per sample
+- **`<output_basename>.<Bioassay_ID>.clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.cluster_report.csv`**: Clustering statistics
+- **`<output_basename>.<Bioassay_ID>.clustered.IsoSeqX_bc##_5p--IsoSeqX_3p.transcripts.singletons.bam`**: Singleton reads (if enabled)
 
 </details>
 
 <details>
 <summary><b>Step 5: PBMM2 (Genome Alignment)</b></summary>
 
-- **`mapped.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`**: Genomic alignments per sample (sorted and indexed)
+- **`<output_basename>.<Bioassay_ID>.mapped.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`**: Genomic alignments per sample (sorted and indexed)
 - **`pbmm2_align_*.log`**: Alignment log files
 
 </details>
@@ -466,22 +294,22 @@ All outputs are in `outputs/kinnex_output/` upon successful workflow completion.
 <details>
 <summary><b>Step 6: IsoSeq Collapse (Isoform Collapsing)</b></summary>
 
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.gff`**: Collapsed isoform models with genomic coordinates
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.fasta`**: Isoform sequences
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.flnc_count.txt`**: Read support per isoform (for quantification)
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.group.txt`**: Read-to-isoform assignments
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.read_stat.txt`**: Read statistics
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.gff`**: Collapsed isoform models with genomic coordinates
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.fasta`**: Isoform sequences
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.flnc_count.txt`**: Read support per isoform (for quantification)
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.group.txt`**: Read-to-isoform assignments
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.read_stat.txt`**: Read statistics
 
 </details>
 
 <details>
 <summary><b>Step 7: Pigeon Classify (Structural Classification)</b></summary>
 
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p_classification.txt`**: Structural classification per transcript
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p_junctions.txt`**: Junction information and coverage
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.report.json`**: Classification statistics
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.summary.txt`**: Summary metrics
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.sorted.gff`**: Sorted isoform annotations
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p_classification.txt`**: Structural classification per transcript
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p_junctions.txt`**: Junction information and coverage
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.report.json`**: Classification statistics
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.summary.txt`**: Summary metrics
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.sorted.gff`**: Sorted isoform annotations
 
 </details>
 
@@ -490,13 +318,13 @@ All outputs are in `outputs/kinnex_output/` upon successful workflow completion.
 
 **Recommended outputs for downstream analysis:**
 
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_classification.txt`**: Quality-filtered classifications
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_junctions.txt`**: Filtered junction information
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_reasons.txt`**: Filtering reason codes
-- **`collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.sorted.filtered_lite.gff`**: Quality-filtered isoform annotations (GFF)
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered.report.json`**: Comprehensive filtering statistics
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered.summary.txt`**: Summary filtering metrics
-- **`pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.saturation.txt`**: Transcript discovery saturation analysis
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_classification.txt`**: Quality-filtered classifications
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_junctions.txt`**: Filtered junction information
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered_lite_reasons.txt`**: Filtering reason codes
+- **`<output_basename>.<Bioassay_ID>.collapse_isoforms.IsoSeqX_bc##_5p--IsoSeqX_3p.sorted.filtered_lite.gff`**: Quality-filtered isoform annotations (GFF)
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered.report.json`**: Comprehensive filtering statistics
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.filtered.summary.txt`**: Summary filtering metrics
+- **`<output_basename>.<Bioassay_ID>.pigeon.IsoSeqX_bc##_5p--IsoSeqX_3p.saturation.txt`**: Transcript discovery saturation analysis
 
 </details>
 
@@ -513,66 +341,23 @@ All outputs are in `outputs/kinnex_output/` upon successful workflow completion.
 #### Output Organization
 
 ```
-outputs/kinnex_output/
-├── segmented.bam                                    # Skera output
-├── fl.*.bam                                         # Lima demux BAMs
-├── flnc.*.bam                                       # Refine FLNC BAMs
-├── clustered.*.transcripts.bam                      # Cluster transcript BAMs
-├── mapped.*.bam                                     # PBMM2 aligned BAMs
-├── collapse_isoforms.*.gff                          # Collapse isoform models
-├── collapse_isoforms.*.fasta                        # Isoform sequences
-├── collapse_isoforms.*.flnc_count.txt               # Quantification
-├── pigeon.*_classification.txt                      # Classifications
-├── pigeon.*_junctions.txt                           # Junction info
-├── pigeon.*.filtered_lite_classification.txt        # Filtered classifications
-├── collapse_isoforms.*.sorted.filtered_lite.gff     # Final filtered isoforms
-└── pigeon.*.saturation.txt                          # Saturation reports
+outputs/kinnex_output_or_multi_smrt_cells_example/
+├── <output_basename>.<smrtcell>.segmented.*                         # Skera outputs per SMRTcell
+├── <output_basename>.<smrtcell>.fl.*.bam                            # Lima demux BAMs per SMRTcell
+├── <output_basename>.fl.*.merged.bam                                # Merged demux BAMs by barcode
+├── <output_basename>.<Bioassay_ID>.fl.*.merged.bam                  # Merged demux BAMs after Bioassay ID insertion
+├── <output_basename>.<Bioassay_ID>.flnc.*.bam                       # Refine FLNC BAMs
+├── <output_basename>.<Bioassay_ID>.clustered.*.transcripts.bam      # Cluster transcript BAMs
+├── <output_basename>.<Bioassay_ID>.mapped.*.bam                     # PBMM2 aligned BAMs
+├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.gff          # Collapse isoform models
+├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.fasta        # Isoform sequences
+├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.flnc_count.txt # Quantification
+├── <output_basename>.<Bioassay_ID>.pigeon.*_classification.txt      # Classifications
+├── <output_basename>.<Bioassay_ID>.pigeon.*_junctions.txt           # Junction info
+├── <output_basename>.<Bioassay_ID>.pigeon.*.filtered_lite_classification.txt # Filtered classifications
+├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.sorted.filtered_lite.gff # Final filtered isoforms
+└── <output_basename>.<Bioassay_ID>.pigeon.*.saturation.txt          # Saturation reports
 ```
-
-## 🔧 Troubleshooting
-
-### Common Issues & Solutions
-
-#### Pipeline Fails at Specific Step
-
-**Problem**: Workflow stops with error message  
-**Solution**:
-1. Check the CWL terminal output for the exact error
-2. Examine log files in `.cwl-out/*/` or `.cwl-tmp/*/stderr.txt`
-3. Review step-specific logs (e.g., `skera.log`, `lima-isoseq.log`)
-4. Look for tool-specific errors in the output directory
-
-#### Out of Memory Errors
-
-**Problem**: Process killed due to insufficient memory  
-**Solution**:
-- Increase EC2 instance size (recommend r6i.4xlarge or larger)
-- Reduce thread counts in `params/main_params.yml`
-- Enable swap space on EC2 instance
-
-#### Missing or Incomplete Outputs
-
-**Problem**: Expected files not in `outputs/kinnex_output/`  
-**Solution**:
-- Check if workflow completed successfully (exit code 0)
-- Intermediate files are in `.cwl-out/*/` during execution
-- CWL only copies outputs to final directory on **successful completion**
-
-#### Primers File Format Error
-
-**Problem**: `ERROR: Barcode names must contain either '3p' or '5p' suffix!`  
-**Solution**:
-- Lima/Refine require primers with `_5p` and `_3p` suffixes
-- Use `IsoSeq_v2_primers_12.fasta` for `lima_barcodes` parameter
-- `Skera split` use simpler primer files like `mas8_primers.fasta`
-
-#### Reference File Issues
-
-**Problem**: Reference genome or annotation errors  
-**Solution**:
-- Ensure reference genome fasta and gtf files are **uncompressed**
-- Check file paths are accessible to Docker containers
-- Validate file integrity with `samtools faidx` or `gtf_validator`
 
 ## ⚙️ Resource Requirements
 
@@ -599,21 +384,10 @@ For full production datasets:
 - Keep during debugging with `--leave-tmpdir`
 
 
-## 🚀 Future Plans
+## 🚀 Cavatica Deployment
 
-### Cavatica Platform Integration
+Validate and deploy the main workflow with `cwltool` and `sbpack`:
 
-**Status: Ready for Deployment** ✅
-
-This pipeline has been optimized for Cavatica platform compatibility:
-- ✅ CWL v1.2 workflows fully compatible with Cavatica execution environment
-- ✅ Docker containers ready for Cavatica container registry
-- ✅ Resource requirements specified for proper instance provisioning (16-32 cores, 64GB RAM)
-- ✅ File array handling optimized for Cavatica's input transformation
-- ✅ Secondary files properly configured for BAM/index file staging
-- ✅ Eliminated Directory.listing dependencies that caused Cavatica errors
-
-**Deployment:**
 ```bash
 # Validate workflow
 cwltool --validate kinnex_longreads.cwl
@@ -624,11 +398,6 @@ cwltool --pack kinnex_longreads.cwl > kinnex_longreads.packed.cwl
 # Deploy to Cavatica (requires sbpack)
 sbpack cavatica your-division/your-project/workflow-name kinnex_longreads.cwl
 ```
-
-**Coming soon:**
-- Pre-configured Cavatica app with optimized default settings
-- Batch processing support for multiple samples
-- Integration with Cavatica's cost estimation tools
 
 ## 📚 Additional Resources
 

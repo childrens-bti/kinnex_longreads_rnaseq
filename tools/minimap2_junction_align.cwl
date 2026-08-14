@@ -41,8 +41,8 @@ inputs:
       position: 0
   seed_k:
     type: int?
-    default: 9
-    doc: Minimizer k-mer size. Overrides the splice:hq preset default of 15.
+    default: 15
+    doc: Minimizer k-mer size. Matches the splice:hq preset default.
     inputBinding:
       prefix: -k
       position: 0

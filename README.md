@@ -95,14 +95,14 @@ Clusters FLNC reads by sequence similarity and generates consensus transcripts f
 Set the main-workflow `alignment_method` input to one of:
 
 - `pbmm2` (default): PacBio's minimap2 wrapper. It aligns clustered transcript BAMs directly.
-- `minimap2`: direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 9 -w 5`.
+- `minimap2`: direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 15 -w 5`.
 - `ultra`: uLTRA Iso-Seq alignment. It creates one annotation index from `reference_fa` and `annotation_gtf`, then aligns each clustered transcript BAM.
 
 For example:
 
 ```yaml
 alignment_method: minimap2
-minimap2_seed_k: 9
+minimap2_seed_k: 15
 minimap2_seed_w: 5
 ```
 

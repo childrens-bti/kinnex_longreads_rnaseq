@@ -36,8 +36,8 @@ inputs:
       prefix: --preset
   seed_k:
     type: int?
-    default: 9
-    doc: Minimizer k-mer size. Overrides the ISOSEQ preset default of 15.
+    default: 15
+    doc: Minimizer k-mer size. Matches the ISOSEQ preset default.
     inputBinding:
       prefix: -k
   seed_w:

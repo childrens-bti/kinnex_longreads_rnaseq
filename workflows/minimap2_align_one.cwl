@@ -14,7 +14,7 @@ inputs:
     type: string
   seed_k:
     type: int?
-    default: 9
+    default: 15
   seed_w:
     type: int?
     default: 5

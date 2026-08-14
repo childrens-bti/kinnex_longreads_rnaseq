@@ -24,7 +24,7 @@ doc: |
   2b. Merge Demultiplexed: Merge per-barcode BAMs across SMRTcells (small files)
   3. IsoSeq Refine: Trim polyA tails and filter full-length non-concatemer (FLNC) reads
   4. IsoSeq Cluster2: Cluster FLNC reads into consensus transcript models
-  5. PBMM2: Align transcript models to reference genome using minimap2
+  5. Align transcript models to the reference genome with the selected aligner
   6. IsoSeq Collapse: Collapse redundant isoforms into unique transcript representations
   7. Pigeon Prepare & Classify: Classify isoforms against reference annotation
   8. Pigeon Filter & Report: Apply quality filters and generate saturation analysis
@@ -178,6 +178,10 @@ inputs:
     doc: Write annotated BAM file from cluster2
   
   # PBMM2 options
+  alignment_method:
+    type: string
+    default: pbmm2
+    doc: "Alignment method. Supported values: pbmm2 or minimap2; minimap2 uses GTF-derived junctions."
   pbmm2_threads:
     type: int?
     default: 36
@@ -201,7 +205,21 @@ inputs:
   pbmm2_bam_index:
     type: string?
     doc: BAM index type for sorted output (NONE, BAI, CSI). If not specified, uses pbmm2 default.
-  
+
+  # minimap2 options
+  minimap2_threads:
+    type: int?
+    default: 36
+  minimap2_sort_threads:
+    type: int?
+    default: 4
+  minimap2_seed_k:
+    type: int?
+    default: 9
+  minimap2_seed_w:
+    type: int?
+    default: 5
+
   # Collapse options
   collapse_min_aln_coverage:
     type: float?
@@ -374,7 +392,7 @@ steps:
         ramMin: $(inputs.cluster_ram_gb * 1024)
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
-  # Step 5: Align transcripts to reference (scatter across samples)
+  # Step 5: Align transcripts to reference with one selected aligner
   pbmm2:
     run: workflows/pbmm2_align_scatter.cwl
     in:
@@ -382,6 +400,7 @@ steps:
       transcript_bams:
         source: cluster/transcripts_bams
         valueFrom: $(self)
+      alignment_method: alignment_method
       preset: pbmm2_preset
       seed_k: pbmm2_seed_k
       seed_w: pbmm2_seed_w
@@ -391,13 +410,31 @@ steps:
       min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
       log_level: log_level
     out: [mapped_bams, log_files]
+    when: $(inputs.alignment_method === 'pbmm2')
+
+  minimap2:
+    run: workflows/minimap2_align_scatter.cwl
+    in:
+      reference: reference_fa
+      annotation_gtf: annotation_gtf
+      transcript_bams:
+        source: cluster/transcripts_bams
+        valueFrom: $(self)
+      alignment_method: alignment_method
+      seed_k: minimap2_seed_k
+      seed_w: minimap2_seed_w
+      threads: minimap2_threads
+      sort_threads: minimap2_sort_threads
+    out: [mapped_bams, log_files]
+    when: $(inputs.alignment_method === 'minimap2')
 
   # Step 6: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
       aligned_bams:
-        source: pbmm2/mapped_bams
+        source: [pbmm2/mapped_bams, minimap2/mapped_bams]
+        pickValue: first_non_null
         valueFrom: $(self)
       flnc_bams:
         source: refine/out_flnc_bams
@@ -514,13 +551,15 @@ outputs:
     type: File[]?
     outputSource: cluster/report_csvs
   
-  # PBMM2 outputs
+  # Alignment outputs
   mapped_bams:
     type: File[]
-    outputSource: pbmm2/mapped_bams
-  pbmm2_log_files:
+    outputSource: [pbmm2/mapped_bams, minimap2/mapped_bams]
+    pickValue: first_non_null
+  alignment_log_files:
     type: File[]?
-    outputSource: pbmm2/log_files
+    outputSource: [pbmm2/log_files, minimap2/log_files]
+    pickValue: first_non_null
   
   # Collapse outputs
   collapse_gffs:

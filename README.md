@@ -92,8 +92,22 @@ Clusters FLNC reads by sequence similarity and generates consensus transcripts f
 - `isoseq_saturation-*.txt` - Saturation curves (pbconda version does not have this output)
 
 #### 5. **Genome Mapping**
-**Tool**: `pbmm2` (wrapper for minimap2)  
-**Alternatives**: minimap2, uLTRA
+Set the main-workflow `alignment_method` input to one of:
+
+- `pbmm2` (default): PacBio's minimap2 wrapper. It aligns clustered transcript BAMs directly.
+- `minimap2`: direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 9 -w 5`.
+
+For example:
+
+```yaml
+alignment_method: minimap2
+minimap2_seed_k: 9
+minimap2_seed_w: 5
+```
+
+`minimap2` converts the clustered BAM to FASTQ, aligns it, then sorts and indexes the resulting BAM. Both methods provide mapped BAMs to `isoseq collapse` through the same main-workflow output.
+
+**Default tool**: `pbmm2` (wrapper for minimap2)
 
 ```bash
 pbmm2 align reference.fasta transcripts-1.bam mapped-1.bam --preset ISOSEQ --sort
@@ -159,8 +173,10 @@ kinnex_longreads/
 │   ├── isoseq_cluster2.cwl
 │   ├── isoseq_collapse.cwl  
 │   ├── isoseq_refine.cwl
+│   ├── gtf_to_junction_bed.cwl
 │   ├── lima_isoseq.cwl
 │   ├── merge_demux_bams_by_barcode.cwl
+│   ├── minimap2_junction_align.cwl
 │   ├── parse_manifest.cwl
 │   ├── pbmm2_align.cwl
 │   ├── pigeon_classify.cwl
@@ -168,11 +184,16 @@ kinnex_longreads/
 │   ├── pigeon_prepare.cwl
 │   ├── pigeon_report.cwl
 │   ├── rename_bams_with_bioassay_id.cwl
+│   ├── samtools_fastq.cwl
+│   ├── samtools_index.cwl
+│   ├── samtools_sort.cwl
 │   └── skera_split.cwl
 ├── workflows/               # CWL workflows and subworkflows  
 │   ├── isoseq_cluster2_scatter.cwl
 │   ├── isoseq_collapse_scatter.cwl
 │   ├── isoseq_refine_scatter.cwl
+│   ├── minimap2_align_one.cwl
+│   ├── minimap2_align_scatter.cwl
 │   ├── pbmm2_align_scatter.cwl
 │   ├── pigeon_classify_scatter.cwl
 │   ├── pigeon_filter_report_scatter.cwl
@@ -284,10 +305,10 @@ SR011156_task001.BA_SR11156_01.fl.IsoSeqX_bc01_5p--IsoSeqX_3p.merged.bam
 </details>
 
 <details>
-<summary><b>Step 5: PBMM2 (Genome Alignment)</b></summary>
+<summary><b>Step 5: Genome Alignment</b></summary>
 
 - **`<output_basename>.<Bioassay_ID>.mapped.IsoSeqX_bc##_5p--IsoSeqX_3p.bam`**: Genomic alignments per sample (sorted and indexed)
-- **`pbmm2_align_*.log`**: Alignment log files
+- **`alignment_log_files`**: Alignment logs from the selected method
 
 </details>
 
@@ -348,7 +369,7 @@ outputs/kinnex_output_or_multi_smrt_cells_example/
 ├── <output_basename>.<Bioassay_ID>.fl.*.merged.bam                  # Merged demux BAMs after Bioassay ID insertion
 ├── <output_basename>.<Bioassay_ID>.flnc.*.bam                       # Refine FLNC BAMs
 ├── <output_basename>.<Bioassay_ID>.clustered.*.transcripts.bam      # Cluster transcript BAMs
-├── <output_basename>.<Bioassay_ID>.mapped.*.bam                     # PBMM2 aligned BAMs
+├── <output_basename>.<Bioassay_ID>.mapped.*.bam                     # Selected-aligner BAMs
 ├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.gff          # Collapse isoform models
 ├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.fasta        # Isoform sequences
 ├── <output_basename>.<Bioassay_ID>.collapse_isoforms.*.flnc_count.txt # Quantification

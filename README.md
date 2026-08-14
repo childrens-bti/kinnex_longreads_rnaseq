@@ -96,6 +96,7 @@ Set the main-workflow `alignment_method` input to one of:
 
 - `pbmm2` (default): PacBio's minimap2 wrapper. It aligns clustered transcript BAMs directly.
 - `minimap2`: direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 9 -w 5`.
+- `ultra`: uLTRA Iso-Seq alignment. It creates one annotation index from `reference_fa` and `annotation_gtf`, then aligns each clustered transcript BAM.
 
 For example:
 
@@ -105,7 +106,7 @@ minimap2_seed_k: 9
 minimap2_seed_w: 5
 ```
 
-`minimap2` converts the clustered BAM to FASTQ, aligns it, then sorts and indexes the resulting BAM. Both methods provide mapped BAMs to `isoseq collapse` through the same main-workflow output.
+`minimap2` and `ultra` convert the clustered BAM to FASTQ, align it, then sort and index the resulting BAM. All three methods provide mapped BAMs to `isoseq collapse` through the same main-workflow output.
 
 **Default tool**: `pbmm2` (wrapper for minimap2)
 
@@ -187,7 +188,9 @@ kinnex_longreads/
 │   ├── samtools_fastq.cwl
 │   ├── samtools_index.cwl
 │   ├── samtools_sort.cwl
-│   └── skera_split.cwl
+│   ├── skera_split.cwl
+│   ├── ultra_index.cwl
+│   └── ultra_isoseq_align.cwl
 ├── workflows/               # CWL workflows and subworkflows  
 │   ├── isoseq_cluster2_scatter.cwl
 │   ├── isoseq_collapse_scatter.cwl
@@ -197,6 +200,8 @@ kinnex_longreads/
 │   ├── pbmm2_align_scatter.cwl
 │   ├── pigeon_classify_scatter.cwl
 │   ├── pigeon_filter_report_scatter.cwl
+│   ├── ultra_isoseq_align_one.cwl
+│   ├── ultra_isoseq_align_scatter.cwl
 │   └── skera_lima_per_smrtcell.cwl
 ├── scripts/                 # Utility scripts copied into the Docker image
 │   └── utils/

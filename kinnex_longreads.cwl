@@ -181,7 +181,7 @@ inputs:
   alignment_method:
     type: string
     default: pbmm2
-    doc: "Alignment method. Supported values: pbmm2 or minimap2; minimap2 uses GTF-derived junctions."
+    doc: "Alignment method. Supported values: pbmm2, minimap2, or ultra. minimap2 uses GTF-derived junctions; ultra uses a GTF-derived uLTRA index."
   pbmm2_threads:
     type: int?
     default: 36
@@ -219,6 +219,17 @@ inputs:
   minimap2_seed_w:
     type: int?
     default: 5
+
+  # uLTRA options
+  ultra_threads:
+    type: int?
+    default: 36
+  ultra_sort_threads:
+    type: int?
+    default: 4
+  ultra_index_thinning:
+    type: int?
+    doc: uLTRA index seed thinning level (0-2); omit for uLTRA default.
 
   # Collapse options
   collapse_min_aln_coverage:
@@ -428,12 +439,27 @@ steps:
     out: [mapped_bams, log_files]
     when: $(inputs.alignment_method === 'minimap2')
 
+  ultra:
+    run: workflows/ultra_isoseq_align_scatter.cwl
+    in:
+      reference: reference_fa
+      annotation_gtf: annotation_gtf
+      transcript_bams:
+        source: cluster/transcripts_bams
+        valueFrom: $(self)
+      alignment_method: alignment_method
+      threads: ultra_threads
+      sort_threads: ultra_sort_threads
+      index_thinning: ultra_index_thinning
+    out: [mapped_bams, log_files]
+    when: $(inputs.alignment_method === 'ultra')
+
   # Step 6: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
       aligned_bams:
-        source: [pbmm2/mapped_bams, minimap2/mapped_bams]
+        source: [pbmm2/mapped_bams, minimap2/mapped_bams, ultra/mapped_bams]
         pickValue: first_non_null
         valueFrom: $(self)
       flnc_bams:
@@ -554,11 +580,11 @@ outputs:
   # Alignment outputs
   mapped_bams:
     type: File[]
-    outputSource: [pbmm2/mapped_bams, minimap2/mapped_bams]
+    outputSource: [pbmm2/mapped_bams, minimap2/mapped_bams, ultra/mapped_bams]
     pickValue: first_non_null
   alignment_log_files:
     type: File[]?
-    outputSource: [pbmm2/log_files, minimap2/log_files]
+    outputSource: [pbmm2/log_files, minimap2/log_files, ultra/log_files]
     pickValue: first_non_null
   
   # Collapse outputs

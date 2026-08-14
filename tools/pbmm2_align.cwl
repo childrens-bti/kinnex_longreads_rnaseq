@@ -34,6 +34,18 @@ inputs:
     default: ISOSEQ
     inputBinding:
       prefix: --preset
+  seed_k:
+    type: int?
+    default: 9
+    doc: Minimizer k-mer size. Overrides the ISOSEQ preset default of 15.
+    inputBinding:
+      prefix: -k
+  seed_w:
+    type: int?
+    default: 5
+    doc: Minimizer window size. Matches the ISOSEQ preset default.
+    inputBinding:
+      prefix: -w
   threads:
     type: int?
     default: 0

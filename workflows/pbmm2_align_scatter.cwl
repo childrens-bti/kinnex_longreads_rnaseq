@@ -15,6 +15,12 @@ inputs:
   preset:
     type: string?
     default: ISOSEQ
+  seed_k:
+    type: int?
+    default: 9
+  seed_w:
+    type: int?
+    default: 5
   threads:
     type: int?
     default: 0
@@ -40,6 +46,8 @@ steps:
       out_bam:
         valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.bam')
       preset: preset
+      seed_k: seed_k
+      seed_w: seed_w
       threads: threads
       sort: sort
       bam_index:

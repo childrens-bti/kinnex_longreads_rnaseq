@@ -35,7 +35,7 @@ doc: |
 requirements:
   InlineJavascriptRequirement: {}
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
 
 inputs:
   demux_bams:
@@ -81,4 +81,3 @@ outputs:
     doc: Array of merged BAMs (one per barcode)
     outputBinding:
       glob: "*.merged.bam"
-

@@ -15,7 +15,7 @@ FROM continuumio/miniconda3:24.7.1-0
 
 LABEL maintainer="Chao Di, cdi@childrensnational.org" \
       description="Kinnex/MAS-Iso-Seq long-read pipeline toolset" \
-      version="1.0"
+      version="1.1"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     CONDA_AUTO_UPDATE_CONDA=false \

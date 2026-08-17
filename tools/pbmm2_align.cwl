@@ -3,7 +3,7 @@ class: CommandLineTool
 label: pbmm2 align (ISOSEQ preset)
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   ShellCommandRequirement: {}
   InlineJavascriptRequirement: {}
   ResourceRequirement:

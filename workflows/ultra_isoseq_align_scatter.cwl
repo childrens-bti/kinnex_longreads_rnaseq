@@ -27,11 +27,18 @@ inputs:
     type: int?
 
 steps:
+  sort_annotation:
+    run: ../tools/sort_gtf.cwl
+    in:
+      annotation_gtf: annotation_gtf
+      out_gtf:
+        valueFrom: annotation.coordinate_sorted.gtf
+    out: [sorted_gtf]
   build_index:
     run: ../tools/ultra_index.cwl
     in:
       reference: reference
-      annotation_gtf: annotation_gtf
+      annotation_gtf: sort_annotation/sorted_gtf
       out_dir:
         valueFrom: ultra_index
       thinning: index_thinning

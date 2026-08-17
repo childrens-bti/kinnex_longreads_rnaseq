@@ -94,8 +94,8 @@ Clusters FLNC reads by sequence similarity and generates consensus transcripts f
 #### 5. **Genome Mapping**
 Set the main-workflow `alignment_method` input to one of:
 
-- `pbmm2` (default): PacBio's minimap2 wrapper. It aligns clustered transcript BAMs directly.
-- `minimap2`: direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 15 -w 5`.
+- `pbmm2`: PacBio's minimap2 wrapper. It aligns clustered transcript BAMs directly.
+- `minimap2` (default): direct splice-aware minimap2 alignment using junctions derived from `annotation_gtf` via `--junc-bed`. Defaults: `-k 15 -w 5`.
 - `ultra`: uLTRA Iso-Seq alignment. It creates one annotation index from `reference_fa` and `annotation_gtf`, then aligns each clustered transcript BAM.
 
 For example:
@@ -108,10 +108,11 @@ minimap2_seed_w: 5
 
 `minimap2` and `ultra` convert the clustered BAM to FASTQ, align it, then sort and index the resulting BAM. All three methods provide mapped BAMs to `isoseq collapse` through the same main-workflow output.
 
-**Default tool**: `pbmm2` (wrapper for minimap2)
+**Default tool**: annotation-guided `minimap2`
 
 ```bash
-pbmm2 align reference.fasta transcripts-1.bam mapped-1.bam --preset ISOSEQ --sort
+minimap2 -ax splice:hq -uf --secondary=no --junc-bed annotation.junctions.bed \
+  -k 15 -w 5 reference.fasta transcripts.fastq > mapped.sam
 ```
 
 Maps consensus transcripts to reference genome to determine genomic coordinates and splice junctions.

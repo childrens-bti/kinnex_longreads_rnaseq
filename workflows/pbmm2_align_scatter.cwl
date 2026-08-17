@@ -12,10 +12,6 @@ inputs:
   reference: File
   transcript_bams:
     type: File[]
-  alignment_method:
-    type: string?
-    default: pbmm2
-    doc: Main-workflow selector; unused by this alignment subworkflow.
   preset:
     type: string?
     default: ISOSEQ

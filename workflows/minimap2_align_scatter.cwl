@@ -13,10 +13,6 @@ inputs:
   annotation_gtf: File
   transcript_bams:
     type: File[]
-  alignment_method:
-    type: string?
-    default: minimap2
-    doc: Main-workflow selector; unused by this alignment subworkflow.
   seed_k:
     type: int?
     default: 15

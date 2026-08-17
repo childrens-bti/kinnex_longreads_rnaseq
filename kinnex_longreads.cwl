@@ -179,8 +179,10 @@ inputs:
   
   # PBMM2 options
   alignment_method:
-    type: string
-    default: pbmm2
+    type:
+      type: enum
+      symbols: [pbmm2, minimap2, ultra]
+    default: minimap2
     doc: "Alignment method. Supported values: pbmm2, minimap2, or ultra. minimap2 uses GTF-derived junctions; ultra uses a GTF-derived uLTRA index."
   pbmm2_threads:
     type: int?
@@ -436,7 +438,7 @@ steps:
       seed_w: minimap2_seed_w
       threads: minimap2_threads
       sort_threads: minimap2_sort_threads
-    out: [mapped_bams, log_files]
+    out: [mapped_bams, bam_indices, log_files]
     when: $(inputs.alignment_method === 'minimap2')
 
   ultra:
@@ -451,7 +453,7 @@ steps:
       threads: ultra_threads
       sort_threads: ultra_sort_threads
       index_thinning: ultra_index_thinning
-    out: [mapped_bams, log_files]
+    out: [mapped_bams, bam_indices, log_files]
     when: $(inputs.alignment_method === 'ultra')
 
   # Step 6: Collapse aligned reads into isoforms (scatter across samples)
@@ -585,6 +587,10 @@ outputs:
   alignment_log_files:
     type: File[]?
     outputSource: [pbmm2/log_files, minimap2/log_files, ultra/log_files]
+    pickValue: first_non_null
+  mapped_bam_indices:
+    type: File[]?
+    outputSource: [minimap2/bam_indices, ultra/bam_indices]
     pickValue: first_non_null
   
   # Collapse outputs

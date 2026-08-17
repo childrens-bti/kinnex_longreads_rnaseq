@@ -13,10 +13,6 @@ inputs:
   annotation_gtf: File
   transcript_bams:
     type: File[]
-  alignment_method:
-    type: string?
-    default: ultra
-    doc: Main-workflow selector; unused by this alignment subworkflow.
   threads:
     type: int?
     default: 32

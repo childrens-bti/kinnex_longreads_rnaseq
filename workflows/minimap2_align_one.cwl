@@ -46,10 +46,16 @@ steps:
         valueFrom: $(self.replace(/\.bam$/, '.sam'))
       log_file: log_file
     out: [mapped_sam, log_file_output]
+  restore_tags:
+    run: ../tools/restore_isoseq_tags.cwl
+    in:
+      source_bam: in_bam
+      mapped_sam: align/mapped_sam
+    out: [tagged_sam]
   sort:
     run: ../tools/samtools_sort.cwl
     in:
-      in_sam: align/mapped_sam
+      in_sam: restore_tags/tagged_sam
       out_bam: out_bam
       threads: sort_threads
     out: [sorted_bam]

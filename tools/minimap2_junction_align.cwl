@@ -20,6 +20,7 @@ arguments:
   - splice:hq
   - -u
   - f
+  - --eqx
   - --secondary=no
 
 inputs:

@@ -83,6 +83,10 @@ outputs:
       glob: $(inputs.out_bam)
     secondaryFiles:
       - .bai?
+  bam_index_output:
+    type: File?
+    outputBinding:
+      glob: $(inputs.out_bam + '.bai')
   log_file_output:
     type: File?
     outputBinding:

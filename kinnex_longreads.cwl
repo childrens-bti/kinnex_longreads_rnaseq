@@ -61,6 +61,7 @@ doc: |
 
 requirements:
   SubworkflowFeatureRequirement: {}
+  MultipleInputFeatureRequirement: {}
   ScatterFeatureRequirement: {}
   StepInputExpressionRequirement: {}
   InlineJavascriptRequirement: {}
@@ -406,8 +407,27 @@ steps:
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
   # Step 5: Align transcripts to reference with one selected aligner
-  align:
-    run: workflows/alignment_router.cwl
+  pbmm2:
+    run: workflows/pbmm2_align_scatter.cwl
+    in:
+      reference: reference_fa
+      transcript_bams:
+        source: cluster/transcripts_bams
+        valueFrom: $(self)
+      alignment_method: alignment_method
+      preset: pbmm2_preset
+      seed_k: pbmm2_seed_k
+      seed_w: pbmm2_seed_w
+      threads: pbmm2_threads
+      sort: pbmm2_sort
+      bam_index: pbmm2_bam_index
+      min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
+      log_level: log_level
+    out: [mapped_bams, bam_indices, log_files]
+    when: $(inputs.alignment_method === 'pbmm2')
+
+  minimap2:
+    run: workflows/minimap2_align_scatter.cwl
     in:
       reference: reference_fa
       annotation_gtf: annotation_gtf
@@ -415,29 +435,35 @@ steps:
         source: cluster/transcripts_bams
         valueFrom: $(self)
       alignment_method: alignment_method
-      pbmm2_preset: pbmm2_preset
-      pbmm2_seed_k: pbmm2_seed_k
-      pbmm2_seed_w: pbmm2_seed_w
-      pbmm2_threads: pbmm2_threads
-      pbmm2_sort: pbmm2_sort
-      pbmm2_bam_index: pbmm2_bam_index
-      pbmm2_min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
-      log_level: log_level
-      minimap2_seed_k: minimap2_seed_k
-      minimap2_seed_w: minimap2_seed_w
-      minimap2_threads: minimap2_threads
-      minimap2_sort_threads: minimap2_sort_threads
-      ultra_threads: ultra_threads
-      ultra_sort_threads: ultra_sort_threads
-      ultra_index_thinning: ultra_index_thinning
+      seed_k: minimap2_seed_k
+      seed_w: minimap2_seed_w
+      threads: minimap2_threads
+      sort_threads: minimap2_sort_threads
     out: [mapped_bams, bam_indices, log_files]
+    when: $(inputs.alignment_method === 'minimap2')
+
+  ultra:
+    run: workflows/ultra_isoseq_align_scatter.cwl
+    in:
+      reference: reference_fa
+      annotation_gtf: annotation_gtf
+      transcript_bams:
+        source: cluster/transcripts_bams
+        valueFrom: $(self)
+      alignment_method: alignment_method
+      threads: ultra_threads
+      sort_threads: ultra_sort_threads
+      index_thinning: ultra_index_thinning
+    out: [mapped_bams, bam_indices, log_files]
+    when: $(inputs.alignment_method === 'ultra')
 
   # Step 6: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
       aligned_bams:
-        source: align/mapped_bams
+        source: [pbmm2/mapped_bams, minimap2/mapped_bams, ultra/mapped_bams]
+        pickValue: first_non_null
         valueFrom: $(self)
       flnc_bams:
         source: refine/out_flnc_bams
@@ -557,14 +583,16 @@ outputs:
   # Alignment outputs
   mapped_bams:
     type: File[]
-    outputSource: align/mapped_bams
+    outputSource: [pbmm2/mapped_bams, minimap2/mapped_bams, ultra/mapped_bams]
+    pickValue: first_non_null
   alignment_log_files:
     type: File[]?
-    outputSource: align/log_files
+    outputSource: [pbmm2/log_files, minimap2/log_files, ultra/log_files]
+    pickValue: first_non_null
   mapped_bam_indices:
     type: File[]?
-    outputSource: align/bam_indices
-  
+    outputSource: [pbmm2/bam_indices, minimap2/bam_indices, ultra/bam_indices]
+    pickValue: first_non_null
   # Collapse outputs
   collapse_gffs:
     type: File[]

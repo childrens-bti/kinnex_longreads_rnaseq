@@ -5,6 +5,7 @@ label: Align one clustered transcript BAM with annotation-guided minimap2
 requirements:
   SubworkflowFeatureRequirement: {}
   InlineJavascriptRequirement: {}
+  StepInputExpressionRequirement: {}
 
 inputs:
   reference: File
@@ -43,6 +44,7 @@ steps:
       seed_w: seed_w
       threads: threads
       out_sam:
+        source: out_bam
         valueFrom: $(self.replace(/\.bam$/, '.sam'))
       log_file: log_file
     out: [mapped_sam, log_file_output]

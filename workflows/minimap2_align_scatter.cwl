@@ -34,31 +34,68 @@ steps:
       out_bed:
         valueFrom: annotation.junctions.bed
     out: [junction_bed]
+  bam_to_fastq:
+    run: ../tools/samtools_fastq.cwl
+    in:
+      in_bam: transcript_bams
+    out: [reads_fastq]
+    scatter: in_bam
+    scatterMethod: dotproduct
   align_each:
-    run: minimap2_align_one.cwl
+    run: ../tools/minimap2_junction_align.cwl
     in:
       reference: reference
       junction_bed: junction_bed/junction_bed
-      in_bam: transcript_bams
-      out_bam:
-        valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.minimap2.bam')
+      reads_fastq: bam_to_fastq/reads_fastq
+      source_bam: transcript_bams
+      out_sam:
+        valueFrom: $(inputs.source_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.minimap2.sam')
       seed_k: seed_k
       seed_w: seed_w
       threads: threads
-      sort_threads: sort_threads
       log_file:
-        valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.minimap2.log')
-    out: [mapped_bam, bam_index, log_file_output]
-    scatter: in_bam
+        valueFrom: $(inputs.source_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.minimap2.log')
+    out: [mapped_sam, log_file_output]
+    scatter: [reads_fastq, source_bam]
+    scatterMethod: dotproduct
+  restore_tags:
+    run: ../tools/restore_isoseq_tags.cwl
+    in:
+      source_bam: transcript_bams
+      mapped_sam: align_each/mapped_sam
+    out: [tagged_sam]
+    scatter: [source_bam, mapped_sam]
+    scatterMethod: dotproduct
+  sort_each:
+    run: ../tools/samtools_sort.cwl
+    in:
+      in_sam: restore_tags/tagged_sam
+      source_bam: transcript_bams
+      out_bam:
+        valueFrom: $(inputs.source_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.minimap2.bam')
+      threads: sort_threads
+    out: [sorted_bam]
+    scatter: [in_sam, source_bam]
+    scatterMethod: dotproduct
+  index_each:
+    run: ../tools/samtools_index.cwl
+    in:
+      in_bam: sort_each/sorted_bam
+      out_bai:
+        source: sort_each/sorted_bam
+        valueFrom: $(self.basename + '.bai')
+      threads: sort_threads
+    out: [bam_index]
+    scatter: [in_bam, out_bai]
     scatterMethod: dotproduct
 
 outputs:
   mapped_bams:
     type: File[]
-    outputSource: align_each/mapped_bam
+    outputSource: sort_each/sorted_bam
   bam_indices:
     type: File[]
-    outputSource: align_each/bam_index
+    outputSource: index_each/bam_index
   log_files:
     type: File[]
     outputSource: align_each/log_file_output

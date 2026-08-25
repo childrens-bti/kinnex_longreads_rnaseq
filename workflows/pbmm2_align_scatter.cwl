@@ -15,6 +15,12 @@ inputs:
   preset:
     type: string?
     default: ISOSEQ
+  seed_k:
+    type: int?
+    default: 15
+  seed_w:
+    type: int?
+    default: 5
   threads:
     type: int?
     default: 0
@@ -40,6 +46,8 @@ steps:
       out_bam:
         valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.bam')
       preset: preset
+      seed_k: seed_k
+      seed_w: seed_w
       threads: threads
       sort: sort
       bam_index:
@@ -48,7 +56,7 @@ steps:
       log_level: log_level
       log_file:
         valueFrom: $(inputs.in_bam.basename.replace(/\.bam$/, '').replace(/\.clustered\./, '.mapped.') + '.pbmm2.log')
-    out: [mapped_bam, log_file_output]
+    out: [mapped_bam, bam_index_output, log_file_output]
     scatter: in_bam
     scatterMethod: dotproduct
 
@@ -56,6 +64,9 @@ outputs:
   mapped_bams:
     type: File[]
     outputSource: align_each/mapped_bam
+  bam_indices:
+    type: File[]?
+    outputSource: align_each/bam_index_output
   log_files:
     type: File[]?
     outputSource: align_each/log_file_output

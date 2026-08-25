@@ -24,7 +24,7 @@ doc: |
   2b. Merge Demultiplexed: Merge per-barcode BAMs across SMRTcells (small files)
   3. IsoSeq Refine: Trim polyA tails and filter full-length non-concatemer (FLNC) reads
   4. IsoSeq Cluster2: Cluster FLNC reads into consensus transcript models
-  5. PBMM2: Align transcript models to reference genome using minimap2
+  5. Align transcript models to the reference genome with the selected aligner
   6. IsoSeq Collapse: Collapse redundant isoforms into unique transcript representations
   7. Pigeon Prepare & Classify: Classify isoforms against reference annotation
   8. Pigeon Filter & Report: Apply quality filters and generate saturation analysis
@@ -61,6 +61,7 @@ doc: |
 
 requirements:
   SubworkflowFeatureRequirement: {}
+  MultipleInputFeatureRequirement: {}
   ScatterFeatureRequirement: {}
   StepInputExpressionRequirement: {}
   InlineJavascriptRequirement: {}
@@ -165,7 +166,7 @@ inputs:
   # Cluster options
   cluster_threads:
     type: int?
-    default: 36
+    default: 32
   cluster_ram_gb:
     type: int?
     default: 48
@@ -178,12 +179,26 @@ inputs:
     doc: Write annotated BAM file from cluster2
   
   # PBMM2 options
+  alignment_method:
+    type:
+      type: enum
+      symbols: [pbmm2, minimap2, ultra]
+    default: minimap2
+    doc: "Alignment method. Supported values: pbmm2, minimap2, or ultra. minimap2 uses GTF-derived junctions; ultra uses a GTF-derived uLTRA index."
   pbmm2_threads:
     type: int?
     default: 36
   pbmm2_preset:
     type: string?
     default: ISOSEQ
+  pbmm2_seed_k:
+    type: int?
+    default: 15
+    doc: Minimizer k-mer size for pbmm2. Matches the ISOSEQ preset default.
+  pbmm2_seed_w:
+    type: int?
+    default: 5
+    doc: Minimizer window size for pbmm2.
   pbmm2_sort:
     type: boolean?
     default: true
@@ -193,7 +208,32 @@ inputs:
   pbmm2_bam_index:
     type: string?
     doc: BAM index type for sorted output (NONE, BAI, CSI). If not specified, uses pbmm2 default.
-  
+
+  # minimap2 options
+  minimap2_threads:
+    type: int?
+    default: 36
+  minimap2_sort_threads:
+    type: int?
+    default: 4
+  minimap2_seed_k:
+    type: int?
+    default: 15
+  minimap2_seed_w:
+    type: int?
+    default: 5
+
+  # uLTRA options
+  ultra_threads:
+    type: int?
+    default: 36
+  ultra_sort_threads:
+    type: int?
+    default: 4
+  ultra_index_thinning:
+    type: int?
+    doc: uLTRA index seed thinning level (0-2); omit for uLTRA default.
+
   # Collapse options
   collapse_min_aln_coverage:
     type: float?
@@ -366,28 +406,39 @@ steps:
         ramMin: $(inputs.cluster_ram_gb * 1024)
     out: [transcripts_bams, singletons_outputs, annotated_bams, report_csvs]
 
-  # Step 5: Align transcripts to reference (scatter across samples)
-  pbmm2:
-    run: workflows/pbmm2_align_scatter.cwl
+  # Step 5: Align transcripts to reference with one selected aligner
+  align:
+    run: workflows/alignment_router.cwl
     in:
       reference: reference_fa
+      annotation_gtf: annotation_gtf
       transcript_bams:
         source: cluster/transcripts_bams
         valueFrom: $(self)
-      preset: pbmm2_preset
-      threads: pbmm2_threads
-      sort: pbmm2_sort
-      bam_index: pbmm2_bam_index
-      min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
+      alignment_method: alignment_method
+      pbmm2_preset: pbmm2_preset
+      pbmm2_seed_k: pbmm2_seed_k
+      pbmm2_seed_w: pbmm2_seed_w
+      pbmm2_threads: pbmm2_threads
+      pbmm2_sort: pbmm2_sort
+      pbmm2_bam_index: pbmm2_bam_index
+      pbmm2_min_gap_comp_id_perc: pbmm2_min_gap_comp_id_perc
       log_level: log_level
-    out: [mapped_bams, log_files]
+      minimap2_seed_k: minimap2_seed_k
+      minimap2_seed_w: minimap2_seed_w
+      minimap2_threads: minimap2_threads
+      minimap2_sort_threads: minimap2_sort_threads
+      ultra_threads: ultra_threads
+      ultra_sort_threads: ultra_sort_threads
+      ultra_index_thinning: ultra_index_thinning
+    out: [mapped_bams, bam_indices, log_files]
 
   # Step 6: Collapse aligned reads into isoforms (scatter across samples)
   collapse:
     run: workflows/isoseq_collapse_scatter.cwl
     in:
       aligned_bams:
-        source: pbmm2/mapped_bams
+        source: align/mapped_bams
         valueFrom: $(self)
       flnc_bams:
         source: refine/out_flnc_bams
@@ -504,14 +555,16 @@ outputs:
     type: File[]?
     outputSource: cluster/report_csvs
   
-  # PBMM2 outputs
+  # Alignment outputs
   mapped_bams:
     type: File[]
-    outputSource: pbmm2/mapped_bams
-  pbmm2_log_files:
+    outputSource: align/mapped_bams
+  alignment_log_files:
     type: File[]?
-    outputSource: pbmm2/log_files
-  
+    outputSource: align/log_files
+  mapped_bam_indices:
+    type: File[]?
+    outputSource: align/bam_indices
   # Collapse outputs
   collapse_gffs:
     type: File[]

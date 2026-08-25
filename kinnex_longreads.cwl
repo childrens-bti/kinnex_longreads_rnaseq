@@ -166,7 +166,7 @@ inputs:
   # Cluster options
   cluster_threads:
     type: int?
-    default: 36
+    default: 32
   cluster_ram_gb:
     type: int?
     default: 48

@@ -70,6 +70,9 @@ requirements:
                           fields.append(f"mg:f:{100 * (1 - divergence):.4f}")
                   destination.write("\t".join(fields) + "\n")
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 32000
+    coresMin: 2
 
 baseCommand: [python3, restore_isoseq_tags.py]
 

@@ -4,7 +4,7 @@ label: Rename BAM files with Bioassay ID prefix
 
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   InlineJavascriptRequirement: {}
   InitialWorkDirRequirement:
     listing:

@@ -3,7 +3,7 @@ class: CommandLineTool
 label: Primer detection and demultiplex (lima --isoseq)
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   ShellCommandRequirement: {}
   InlineJavascriptRequirement: {}
   ResourceRequirement:

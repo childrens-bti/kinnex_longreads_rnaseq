@@ -4,7 +4,7 @@ label: Iso-Seq refine full-length detection
 
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   InlineJavascriptRequirement: {}
   ResourceRequirement:
     ramMin: 64000
@@ -63,4 +63,3 @@ outputs:
     type: File?
     outputBinding:
       glob: $(inputs.in_dataset.basename.replace(/\.bam$/, '').replace(/\.fl\./, '.flnc.') + '.report.csv')
-

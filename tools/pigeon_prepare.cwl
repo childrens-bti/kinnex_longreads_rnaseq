@@ -3,7 +3,7 @@ class: CommandLineTool
 label: Pigeon prepare - Prepare classification input files
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   InlineJavascriptRequirement: {}
   ResourceRequirement:
     ramMin: 64000

@@ -3,7 +3,7 @@ class: CommandLineTool
 label: pbmm2 align (ISOSEQ preset)
 requirements:
   DockerRequirement:
-    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.0
+    dockerPull: pgc-images.sbgenomics.com/childrens-bti/kinnex_longreads:v1.1
   ShellCommandRequirement: {}
   InlineJavascriptRequirement: {}
   ResourceRequirement:
@@ -34,6 +34,18 @@ inputs:
     default: ISOSEQ
     inputBinding:
       prefix: --preset
+  seed_k:
+    type: int?
+    default: 15
+    doc: Minimizer k-mer size. Matches the ISOSEQ preset default.
+    inputBinding:
+      prefix: -k
+  seed_w:
+    type: int?
+    default: 5
+    doc: Minimizer window size. Matches the ISOSEQ preset default.
+    inputBinding:
+      prefix: -w
   threads:
     type: int?
     default: 0
@@ -71,6 +83,10 @@ outputs:
       glob: $(inputs.out_bam)
     secondaryFiles:
       - .bai?
+  bam_index_output:
+    type: File?
+    outputBinding:
+      glob: $(inputs.out_bam + '.bai')
   log_file_output:
     type: File?
     outputBinding:

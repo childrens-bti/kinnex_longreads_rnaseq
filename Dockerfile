@@ -1,10 +1,21 @@
 # syntax=docker/dockerfile:1.7
 # Kinnex/MAS-Iso-Seq Pipeline Docker Image (Miniconda, optimized)
+FROM mambaorg/micromamba:2.0.5 AS optional-aligners
+USER root
+
+RUN micromamba create -y -p /opt/aligners \
+        -c conda-forge -c bioconda --strict-channel-priority \
+        python=3.11 \
+        minimap2=2.31 \
+        ultra_bioinformatics=0.1 \
+        namfinder=0.1.3 \
+    && micromamba clean --all --yes
+
 FROM continuumio/miniconda3:24.7.1-0
 
 LABEL maintainer="Chao Di, cdi@childrensnational.org" \
       description="Kinnex/MAS-Iso-Seq long-read pipeline toolset" \
-      version="1.0"
+      version="1.1"
 
 ENV DEBIAN_FRONTEND=noninteractive \
     CONDA_AUTO_UPDATE_CONDA=false \
@@ -43,6 +54,14 @@ RUN Rscript -e "install.packages(c('tidyverse', 'ggplot2'), repos='https://cloud
 
 COPY scripts/ /scripts/
 RUN chmod -R +r /scripts/ && chown -R 1000:1000 /scripts/
+
+COPY --from=optional-aligners /opt/aligners /opt/aligners
+ENV PATH="/opt/aligners/bin:${PATH}"
+LABEL version="1.1"
+
+RUN minimap2 --version \
+    && uLTRA --help >/dev/null \
+    && command -v namfinder >/dev/null
 
 ## Scripts step removed: scripts/ directory not present
 WORKDIR /data

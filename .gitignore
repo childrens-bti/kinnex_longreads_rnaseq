@@ -14,9 +14,6 @@ __pycache__/
 *.cwl.json
 *.inputs.json
 *.outputs.json
-**/*.sh
-!mount_s3.sh
-!run_data.sh
 *.err
 *.out
 tmp/
